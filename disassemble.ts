@@ -26,7 +26,12 @@ export function disassemble(data: Buffer) {
       return {
         instruction: `${opcodes[op]} ${destionation}, ${source}`,
         hex: data.toString("hex"),
-        binary: binary,
+        op,
+        d,
+        w,
+        mod,
+        reg,
+        rm,
       };
     } else {
       const source = REG[rm][w];

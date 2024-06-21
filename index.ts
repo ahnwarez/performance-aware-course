@@ -1,15 +1,17 @@
 import fs from "node:fs/promises";
 
-import { disassemble, bufferToBinaryString } from "./disassemble";
+import { disassemble } from "./disassemble";
 
 async function main(file: string) {
   const data = await fs.readFile(file);
 
-  const instruction = disassemble(data);
-  const binary = bufferToBinaryString(data);
-  const output = `${instruction}\n ${data.toString("hex")} \n ${binary}`;
-
-  console.log(output);
+  // chunk the data into 2 byte chunks
+  // for each chunk, disassemble it
+  for (let i = 0; i < data.length; i += 2) {
+    const chunk = data.slice(i, i + 2);
+    const instruction = disassemble(chunk);
+    console.table(instruction);
+  }
 }
 
 const file = process.argv[2];
