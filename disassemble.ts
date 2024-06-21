@@ -1,12 +1,15 @@
 export function disassemble(data: Buffer) {
-  // mov si, bx
-  // 10001001 11011010
+  // mov dx, bx
+  // 1000 1000 1110 0101
   const binary = bufferToBinaryString(data);
+  // 1000 1000
   const firstByte = binary.slice(0, 8);
+  // 1110 0101
   const secondByte = binary.slice(8, 16);
 
   const op = firstByte.slice(0, 6);
   // d means direction, 0 means source, 1 means destination
+  // in this case, 0 means source
   const d = firstByte.slice(6, 7);
   // w means word, 1 means 16 bit, 0 means 8 bit
   const w = firstByte.slice(7, 8);
@@ -17,9 +20,23 @@ export function disassemble(data: Buffer) {
 
   if (mod === "11") {
     // this is a register to register move
-    const destionation = REG[reg][w];
-    const source = REG[rm][w];
-    return `${opcodes[op]} ${source}, ${destionation}`;
+    if (d === "0") {
+      const source = REG[reg][w];
+      const destionation = REG[rm][w];
+      return {
+        instruction: `${opcodes[op]} ${destionation}, ${source}`,
+        hex: data.toString("hex"),
+        binary: binary,
+      };
+    } else {
+      const source = REG[rm][w];
+      const destionation = REG[reg][w];
+      return {
+        instruction: `${opcodes[op]} ${destionation}, ${source}`,
+        hex: data.toString("hex"),
+        binary: binary,
+      };
+    }
   }
 }
 
