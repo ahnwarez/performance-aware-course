@@ -57,4 +57,31 @@ describe("register to register move", () => {
     const buffer = Buffer.from("89c5", "hex");
     expect(disassemble(buffer)?.instruction).toBe("mov bp, ax");
   });
+
+  it("mov si, bx", () => {
+    const buffer = Buffer.from("89de", "hex");
+    expect(disassemble(buffer)?.instruction).toBe("mov si, bx");
+  });
+
+  it("mov dh, al", () => {
+    const buffer = Buffer.from("88c6", "hex");
+    expect(disassemble(buffer)?.instruction).toBe("mov dh, al");
+  });
+});
+
+describe("8-bit immediate to register", () => {
+  it("mov cl, 12", () => {
+    const buffer = Buffer.from("b10c", "hex");
+    expect(disassemble(buffer)?.instruction).toBe("mov cl, 12");
+  });
+
+  it.skip("mov cl, -12", () => {
+    const buffer = Buffer.from("b5f4", "hex");
+    expect(disassemble(buffer)?.instruction).toBe("mov cl, -12");
+  });
+
+  it("mov cx, 12", () => {
+    const buffer = Buffer.from("b90c", "hex");
+    expect(disassemble(buffer)?.instruction).toBe("mov cx, 12");
+  });
 });

@@ -1,10 +1,17 @@
+/** This function takes a buffer of data and disassembles it into assembly code
+/* @param {Buffer} data - The buffer of data to disassemble, this the entire file
+ */
 export function disassemble(data: Buffer) {
-  // mov dx, bx
-  // 1000 1000 1110 0101
+  // │   hex   │  'b10c'  │
+  // │   op    │ '101100' │
+  // │    d    │   '0'    │
+  // │    w    │   '1'    │
+  // │   mod   │   '00'   │
+  // │   reg   │  '001'   │
+  // │   rm    │  '100'
+
   const binary = bufferToBinaryString(data);
-  // 1000 1000
   const firstByte = binary.slice(0, 8);
-  // 1110 0101
   const secondByte = binary.slice(8, 16);
 
   const op = firstByte.slice(0, 6);
@@ -18,36 +25,68 @@ export function disassemble(data: Buffer) {
   const reg = secondByte.slice(2, 5);
   const rm = secondByte.slice(5, 8);
 
-  if (mod === "11") {
-    // this is a register to register move
-    if (d === "0") {
-      const source = REG[reg][w];
-      const destionation = REG[rm][w];
-      return {
-        instruction: `${opcodes[op]} ${destionation}, ${source}`,
-        hex: data.toString("hex"),
-        op,
-        d,
-        w,
-        mod,
-        reg,
-        rm,
-      };
-    } else {
-      const source = REG[rm][w];
-      const destionation = REG[reg][w];
-      return {
-        instruction: `${opcodes[op]} ${destionation}, ${source}`,
-        hex: data.toString("hex"),
-        binary: binary,
-      };
-    }
+  console.log("op", op);
+  if (op === "100010" && mod === "11") {
+    const output = registerToRegister(op, d, w, mod, reg, rm);
+    return output;
+  } else if (op.startsWith("1011")) {
+    const binary = bufferToBinaryString(data.slice(0, 27));
+    const w = binary.slice(4, 5);
+    const reg = binary.slice(5, 8);
+    const dataM = binary.slice(8, 12);
+    const dataL = binary.slice(12, 16);
+    const output = immediateToRegister(w, reg, dataM, dataL);
+    return output;
   }
 }
 
-const opcodes = {
-  "100010": "mov",
-};
+function immediateToRegister(
+  w: string,
+  reg: string,
+  dataM: string,
+  dataL: string,
+) {
+  const destination = REG[reg][w];
+  const immediateValue = parseInt(dataM + dataL, 2);
+  return {
+    instruction: `mov ${destination}, ${immediateValue}`,
+  };
+}
+
+function registerToRegister(
+  op: string,
+  d: string,
+  w: string,
+  mod: string,
+  reg: string,
+  rm: string,
+) {
+  let outupt = {
+    op,
+    d,
+    w,
+    mod,
+    reg,
+    rm,
+  };
+
+  // this is a register to register move
+  if (d === "0") {
+    const source = REG[reg][w];
+    const destionation = REG[rm][w];
+    return {
+      ...outupt,
+      instruction: `mov ${destionation}, ${source}`,
+    };
+  } else {
+    const source = REG[rm][w];
+    const destionation = REG[reg][w];
+    return {
+      ...outupt,
+      instruction: `mov ${destionation}, ${source}`,
+    };
+  }
+}
 
 const REG = {
   "000": {
