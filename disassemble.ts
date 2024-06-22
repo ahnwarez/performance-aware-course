@@ -25,12 +25,12 @@ export function disassemble(data: Buffer) {
   const reg = secondByte.slice(2, 5);
   const rm = secondByte.slice(5, 8);
 
-  console.log("op", op);
   if (op === "100010" && mod === "11") {
     const output = registerToRegister(op, d, w, mod, reg, rm);
     return output;
   } else if (op.startsWith("1011")) {
     const binary = bufferToBinaryString(data.slice(0, 27));
+    console.log({ binary });
     const w = binary.slice(4, 5);
     const reg = binary.slice(5, 8);
     const dataM = binary.slice(8, 12);
@@ -47,6 +47,13 @@ function immediateToRegister(
   dataL: string,
 ) {
   const destination = REG[reg][w];
+  console.log({
+    w,
+    reg,
+    dataM,
+    dataL,
+  });
+
   const immediateValue = parseInt(dataM + dataL, 2);
   return {
     instruction: `mov ${destination}, ${immediateValue}`,

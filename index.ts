@@ -1,13 +1,12 @@
-import fs from "node:fs/promises";
-
 import { disassemble } from "./disassemble";
 
-async function main(file: string) {
-  const data = await fs.readFile(file);
+function main() {
+  // read from stdin and pass the buffer to disassemble
 
-  const instruction = disassemble(data);
-  console.table(instruction);
+  process.stdin.on("data", (data) => {
+    const output = disassemble(data);
+    console.log(output?.instruction);
+  });
 }
 
-const file = process.argv[2];
-main(file);
+main();

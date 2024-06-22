@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "comp": "tsx index.ts > index.asm && fc index.asm",
     "dev": "tsx index.ts",
     "test": "vitest"
   },
