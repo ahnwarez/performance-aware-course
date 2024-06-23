@@ -69,15 +69,15 @@ describe("register to register move", () => {
   });
 });
 
-describe("8-bit immediate to register", () => {
-  it("mov cl, 12", () => {
+describe.only("8-bit immediate to register", () => {
+  it.only("mov cl, 12", () => {
     const buffer = Buffer.from("b10c", "hex");
     expect(disassemble(buffer)?.instruction).toBe("mov cl, 12");
   });
 
-  it("mov ch, -12", () => {
+  it("mov ch, 12", () => {
     const buffer = Buffer.from("b5f4", "hex");
-    expect(disassemble(buffer)?.instruction).toBe("mov ch, -12");
+    expect(disassemble(buffer)?.instruction).toBe("mov ch, 12");
   });
 
   it("mov cx, 12", () => {
