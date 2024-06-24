@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { disassemble } from "./disassemble.ts";
 
 describe("register to register move", () => {
-  it("mov cx, bx", () => {
+  it.only("mov cx, bx", () => {
     const buffer = Buffer.from("89d9", "hex");
     expect(disassemble(buffer)?.instruction).toBe("mov cx, bx");
   });
@@ -69,8 +69,8 @@ describe("register to register move", () => {
   });
 });
 
-describe.only("8-bit immediate to register", () => {
-  it.only("mov cl, 12", () => {
+describe("8-bit immediate to register", () => {
+  it("mov cl, 12", () => {
     const buffer = Buffer.from("b10c", "hex");
     expect(disassemble(buffer)?.instruction).toBe("mov cl, 12");
   });
