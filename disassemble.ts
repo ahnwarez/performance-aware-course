@@ -22,16 +22,23 @@ const r16 = {
 
 // Register names for REG encoding when W is 0 or 1
 const Registers = {
-  0: r8,
-  1: r16,
+  "0": r8,
+  "1": r16,
 };
 
 const instructionsTable = {
+  // register to register
+  "100010": (d: string, w: string, mod: string, reg: string, rm: string) => {
+    const source = d === "0" ? Registers[w][reg] : Registers[w][rm];
+    const destination = d === "0" ? Registers[w][rm] : Registers[w][reg];
+    return `mov ${destination}, ${source}`;
+  },
   "1011": (w: string, reg: string, data: string, dataIfW: string) => {
     // data and dataIfW are signed 8-bit values
     const isNegative = data[0] === "1";
     const regName = Registers[w][reg];
     if (w === "0") {
+      // TODO: read the manual and find out how to convert 8-bit signed binary to decimal
       const toDecimal = parseInt(data, 2);
       const twoComplement = isNegative ? toDecimal - 256 : toDecimal;
       return `mov ${regName}, ${Math.abs(twoComplement)}`;
