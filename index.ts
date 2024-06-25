@@ -73,17 +73,17 @@ const Registers = {
   '1': r16,
 }
 
-function decodeInstruction(instruction: Buffer) {
-  let assemblyCode = []
+function decodeInstruction(instructStream: Buffer) {
+  let assemblyCode = [] as string[]
   let cursor = 0
-  while (cursor < instruction.length) {
-    const opcode = instruction[cursor++]
+  while (cursor < instructStream.length) {
+    const opcode = instructStream[cursor++]
     const decodedInstruction = MachineInstructionDecodingGuide[opcode]
     let mnemonicTemplate = decodedInstruction.template
     const operandDecoding = decodedInstruction.reg
 
     if (operandDecoding) {
-      const operandByte = instruction[cursor++]
+      const operandByte = instructStream[cursor++]
       if (Array.isArray(operandDecoding)) {
         for (let i = 0; i < operandDecoding.length; i += 3) {
           const target = operandDecoding[i]
@@ -110,7 +110,7 @@ function decodeInstruction(instruction: Buffer) {
 }
 
 function main() {
-  const decodedInstruction = decodeInstruction(Buffer.from('88fd', 'hex'))
+  const decodedInstruction = decodeInstruction(Buffer.from('89d988fd', 'hex'))
   console.log(decodedInstruction)
 }
 
