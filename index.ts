@@ -73,7 +73,7 @@ const Registers = {
   '1': r16,
 }
 
-function decodeInstruction(instructStream: Buffer) {
+export function decodeInstruction(instructStream: Buffer) {
   let assemblyCode = [] as string[]
   let cursor = 0
   while (cursor < instructStream.length) {
@@ -103,10 +103,10 @@ function decodeInstruction(instructStream: Buffer) {
       }
     }
 
-    assemblyCode.push(mnemonicTemplate)
+    assemblyCode.push(mnemonicTemplate.toLowerCase())
   }
 
-  return assemblyCode
+  return assemblyCode.join('\n')
 }
 
 function main() {
