@@ -47,22 +47,22 @@ const MachineInstructionDecodingGuide = {
   0xa3: { template: 'MOV {mem16}, AL' },
   0xa4: { template: 'MOVS DEST-STR8, SRC-STR8' },
   0xa5: { template: 'MOVS DEST-STR16, SRC-STR16' },
-  0xb0: { template: 'MOV AL, {immed8}' },
-  0xb1: { template: 'MOV CL, {immed8}' },
-  0xb2: { template: 'MOV DL, {immed8}' },
-  0xb3: { template: 'MOV BL, {immed8}' },
-  0xb4: { template: 'MOV AH, {immed8}' },
-  0xb5: { template: 'MOV CH, {immed8}' },
-  0xb6: { template: 'MOV DH, {immed8}' },
-  0xb7: { template: 'MOV BH, {immed8}' },
-  0xb8: { template: 'MOV AX, {immed16}' },
-  0xb9: { template: 'MOV CX, {immed16}' },
-  0xba: { template: 'MOV DX, {immed16}' },
-  0xbb: { template: 'MOV BX, {immed16}' },
-  0xbc: { template: 'MOV SP, {immed16}' },
-  0xbd: { template: 'MOV BP, {immed16}' },
-  0xbe: { template: 'MOV SI, {immed16}' },
-  0xbf: { template: 'MOV DI, {immed16}' },
+  0xb0: { template: 'MOV AL, {immed}' },
+  0xb1: { template: 'MOV CL, {immed}' },
+  0xb2: { template: 'MOV DL, {immed}' },
+  0xb3: { template: 'MOV BL, {immed}' },
+  0xb4: { template: 'MOV AH, {immed}' },
+  0xb5: { template: 'MOV CH, {immed}' },
+  0xb6: { template: 'MOV DH, {immed}' },
+  0xb7: { template: 'MOV BH, {immed}' },
+  0xb8: { template: 'MOV AX, {immed}' },
+  0xb9: { template: 'MOV CX, {immed}' },
+  0xba: { template: 'MOV DX, {immed}' },
+  0xbb: { template: 'MOV BX, {immed}' },
+  0xbc: { template: 'MOV SP, {immed}' },
+  0xbd: { template: 'MOV BP, {immed}' },
+  0xbe: { template: 'MOV SI, {immed}' },
+  0xbf: { template: 'MOV DI, {immed}' },
   0xc6: { template: 'MOV {a}, {b}' },
   0xc7: { template: 'MOV {a}, {b}' },
 }
@@ -82,25 +82,37 @@ export function decodeInstruction(instructStream: Buffer) {
     let mnemonicTemplate = decodedInstruction.template
     const operandDecoding = decodedInstruction.reg
 
-    if (operandDecoding) {
+    if (Array.isArray(operandDecoding)) {
       const operandByte = instructStream[cursor++]
-      if (Array.isArray(operandDecoding)) {
-        for (let i = 0; i < operandDecoding.length; i += 3) {
-          const target = operandDecoding[i]
-          const registerMap = operandDecoding[i + 1]
-          const shiftAmount = operandDecoding[i + 2]
+      for (let i = 0; i < operandDecoding.length; i += 3) {
+        const target = operandDecoding[i]
+        const registerMap = operandDecoding[i + 1]
+        const shiftAmount = operandDecoding[i + 2]
 
-          if (target === 'a' || (target === 'b' && shiftAmount)) {
-            const registerCode = (operandByte >> shiftAmount) & 0b111
-            const registerName =
-              registerMap[registerCode.toString(2).padStart(3, '0')]
-            mnemonicTemplate = mnemonicTemplate.replace(
-              `{${target}}`,
-              registerName
-            )
-          }
+        if (target === 'a' || (target === 'b' && shiftAmount)) {
+          const registerCode = (operandByte >> shiftAmount) & 0b111
+          const registerName =
+            registerMap[registerCode.toString(2).padStart(3, '0')]
+          mnemonicTemplate = mnemonicTemplate.replace(
+            `{${target}}`,
+            registerName
+          )
         }
       }
+    } else {
+      // this is an immediate to register instruction
+      // need to check if the w bit is set, 1 means 16-bit register and 0 means 8-bit register
+
+      console.log({
+        noShift: instructStream[cursor] & 0b1,
+        shift: (instructStream[cursor] >> 4) & 0b1,
+      })
+
+      const immediateValue = instructStream[cursor++]
+      mnemonicTemplate = mnemonicTemplate.replace(
+        '{immed}',
+        immediateValue.toString()
+      )
     }
 
     assemblyCode.push(mnemonicTemplate.toLowerCase())
@@ -110,7 +122,7 @@ export function decodeInstruction(instructStream: Buffer) {
 }
 
 function main() {
-  const decodedInstruction = decodeInstruction(Buffer.from('89d988fd', 'hex'))
+  const decodedInstruction = decodeInstruction(Buffer.from('b50f', 'hex'))
   console.log(decodedInstruction)
 }
 

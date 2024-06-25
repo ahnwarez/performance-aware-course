@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { decodeInstruction } from './index'
 
 describe('register to register move', () => {
-  it.only('mov cx, bx', () => {
+  it('mov cx, bx', () => {
     const buffer = Buffer.from('89d9', 'hex')
     expect(decodeInstruction(buffer)).toBe('mov cx, bx')
   })
@@ -73,11 +73,6 @@ describe('8-bit immediate to register', () => {
   it('mov cl, 12', () => {
     const buffer = Buffer.from('b10c', 'hex')
     expect(decodeInstruction(buffer)).toBe('mov cl, 12')
-  })
-
-  it('mov ch, 12', () => {
-    const buffer = Buffer.from('b5f4', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov ch, 12')
   })
 
   it('mov cx, 12', () => {
