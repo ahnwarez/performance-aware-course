@@ -1,129 +1,161 @@
-const InstructionBitPatterns = {
-  '100010': 'MOV',
+enum Mnemonic {
+  MOV = 'mov',
 }
 
-const r8 = {
-  '000': 'AL',
-  '001': 'CL',
-  '010': 'DL',
-  '011': 'BL',
-  '100': 'AH',
-  '101': 'CH',
-  '110': 'DH',
-  '111': 'BH',
+enum Register {
+  al = 'al',
+  cl = 'cl',
+  dl = 'dl',
+  bl = 'bl',
+  ah = 'ah',
+  ch = 'ch',
+  dh = 'dh',
+  bh = 'bh',
+  ax = 'ax',
+  cx = 'cx',
+  dx = 'dx',
+  bx = 'bx',
+  sp = 'sp',
+  bp = 'bp',
+  si = 'si',
+  di = 'di',
 }
 
-const r16 = {
-  '000': 'AX',
-  '001': 'CX',
-  '010': 'DX',
-  '011': 'BX',
-  '100': 'SP',
-  '101': 'BP',
-  '110': 'SI',
-  '111': 'DI',
-}
-
-const readByte = ['immed8', null, 0]
-const readWord = [
-  ['datalo', null, 0],
-  ['datahi', null, 0],
-]
-const regSourceByte = ['a', r8, 0, 'b', r8, 3]
-const regDestByte = ['a', r8, 3, 'b', r8, 0]
-const regSourceWord = ['a', r16, 0, 'b', r16, 3]
-const regDestWord = ['a', r16, 3, 'b', r16, 0]
-const segRegSourceWord = []
-const segRegDestWord = []
-
-const MachineInstructionDecodingGuide = {
-  0x88: { template: 'MOV {a}, {b}', reg: regSourceByte },
-  0x89: { template: 'MOV {a}, {b}', reg: regSourceWord },
-  0x8b: { template: 'MOV {a}, {b}', reg: regDestWord },
-  0x8c: { template: 'MOV {a}, {b}', reg: segRegSourceWord },
-  0xa0: { template: 'MOV AL, {mem8}' },
-  0xa1: { template: 'MOV AX, {mem16}' },
-  0xa2: { template: 'MOV {mem8}, AL' },
-  0xa3: { template: 'MOV {mem16}, AL' },
-  0xa4: { template: 'MOVS DEST-STR8, SRC-STR8' },
-  0xa5: { template: 'MOVS DEST-STR16, SRC-STR16' },
-  0xb0: { template: 'MOV AL, {immed}' },
-  0xb1: { template: 'MOV CL, {immed}' },
-  0xb2: { template: 'MOV DL, {immed}' },
-  0xb3: { template: 'MOV BL, {immed}' },
-  0xb4: { template: 'MOV AH, {immed}' },
-  0xb5: { template: 'MOV CH, {immed}' },
-  0xb6: { template: 'MOV DH, {immed}' },
-  0xb7: { template: 'MOV BH, {immed}' },
-  0xb8: { template: 'MOV AX, {immed}' },
-  0xb9: { template: 'MOV CX, {immed}' },
-  0xba: { template: 'MOV DX, {immed}' },
-  0xbb: { template: 'MOV BX, {immed}' },
-  0xbc: { template: 'MOV SP, {immed}' },
-  0xbd: { template: 'MOV BP, {immed}' },
-  0xbe: { template: 'MOV SI, {immed}' },
-  0xbf: { template: 'MOV DI, {immed}' },
-  0xc6: { template: 'MOV {a}, {b}' },
-  0xc7: { template: 'MOV {a}, {b}' },
-}
-
-// Register names for REG encoding when W is 0 or 1
-const Registers = {
-  '0': r8,
-  '1': r16,
-}
-
-export function decodeInstruction(instructStream: Buffer) {
-  let assemblyCode = [] as string[]
-  let cursor = 0
-  while (cursor < instructStream.length) {
-    const opcode = instructStream[cursor++]
-    const decodedInstruction = MachineInstructionDecodingGuide[opcode]
-    let mnemonicTemplate = decodedInstruction.template
-    const operandDecoding = decodedInstruction.reg
-
-    if (Array.isArray(operandDecoding)) {
-      const operandByte = instructStream[cursor++]
-      for (let i = 0; i < operandDecoding.length; i += 3) {
-        const target = operandDecoding[i]
-        const registerMap = operandDecoding[i + 1]
-        const shiftAmount = operandDecoding[i + 2]
-
-        if (target === 'a' || (target === 'b' && shiftAmount)) {
-          const registerCode = (operandByte >> shiftAmount) & 0b111
-          const registerName =
-            registerMap[registerCode.toString(2).padStart(3, '0')]
-          mnemonicTemplate = mnemonicTemplate.replace(
-            `{${target}}`,
-            registerName
-          )
-        }
-      }
-    } else {
-      // this is an immediate to register instruction
-      // need to check if the w bit is set, 1 means 16-bit register and 0 means 8-bit register
-
-      console.log({
-        noShift: instructStream[cursor] & 0b1,
-        shift: (instructStream[cursor] >> 4) & 0b1,
-      })
-
-      const immediateValue = instructStream[cursor++]
-      mnemonicTemplate = mnemonicTemplate.replace(
-        '{immed}',
-        immediateValue.toString()
-      )
+type Operand =
+  | {
+      type: 'register'
+      register: Register
+    }
+  | {
+      type: 'immediate'
+      value: number
+    }
+  | {
+      type: 'memory'
+      value: number
     }
 
-    assemblyCode.push(mnemonicTemplate.toLowerCase())
+interface DecodedInstruction {
+  mnemonic: Mnemonic
+  operands: Operand[]
+}
+
+enum OperandType {
+  REG,
+  RM,
+  imm,
+}
+
+interface InstructionFormat {
+  opcode: number
+  mask: number
+  mnemonic: Mnemonic
+  operands: OperandType[]
+}
+
+const instructionFormats: InstructionFormat[] = [
+  // register to register
+  {
+    opcode: 0x88,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.RM, OperandType.REG],
+  },
+  {
+    opcode: 0x89,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.RM, OperandType.REG],
+  },
+  {
+    opcode: 0x8a,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.RM],
+  },
+  {
+    opcode: 0x8b,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.RM],
+  },
+  // immediate to register
+  {
+    opcode: 0xb0,
+    mask: 0xf0,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.imm],
+  },
+]
+
+const registerEncoding: { [d: number]: { [r: number]: Register } } = {
+  1: {
+    0b000: Register.ax,
+    0b001: Register.cx,
+    0b010: Register.dx,
+    0b011: Register.bx,
+    0b100: Register.sp,
+    0b101: Register.bp,
+    0b110: Register.si,
+    0b111: Register.di,
+  },
+  0: {
+    0b000: Register.al,
+    0b001: Register.cl,
+    0b010: Register.dl,
+    0b011: Register.bl,
+    0b100: Register.ah,
+    0b101: Register.ch,
+    0b110: Register.dh,
+    0b111: Register.bh,
+  },
+}
+
+function printInstruction(instruction: DecodedInstruction): string {
+  return `${instruction.mnemonic} ${instruction.operands.map((operand) => operand.toString()).join(', ')}`
+}
+
+function decodInstruction(encodedInstruction: number): DecodedInstruction | undefined {
+  const firstByte = (encodedInstruction & 0xff00) >> 8
+  const secondByte = encodedInstruction & 0x00ff
+
+  // find the matching instruction format
+  const format = instructionFormats.find((format) => (firstByte & format.mask) === format.opcode)
+  if (!format) {
+    return undefined
   }
 
-  return assemblyCode.join('\n')
+  const d = (firstByte & 0x02) >> 1
+  const w = firstByte & 0x01
+  const mod = (secondByte & 0xc0) >> 6
+  const reg = (secondByte & 0x38) >> 3
+  const rm = secondByte & 0x07
+
+  const operands: Operand[] = format.operands.map((operandType) => {
+    switch (operandType) {
+      case OperandType.REG:
+        return { type: 'register', register: registerEncoding[w][reg] }
+      case OperandType.RM:
+        if (mod === 0b11) {
+          return { type: 'register', register: registerEncoding[w][rm] }
+        } else {
+          return { type: 'memory', value: rm }
+        }
+      case OperandType.imm:
+        return { type: 'immediate', value: secondByte }
+      default:
+        throw new Error('Invalid operand type')
+    }
+  })
+
+  if (format.mnemonic === Mnemonic.MOV && d === 1) {
+    ;[operands[0], operands[1]] = [operands[1], operands[0]]
+  }
+
+  return {
+    mnemonic: format.mnemonic,
+    operands,
+  }
 }
 
-function main() {
-  const decodedInstruction = decodeInstruction(Buffer.from('b50f', 'hex'))
-  console.log(decodedInstruction)
-}
-
-main()
+console.log(decodInstruction(0xb001))
