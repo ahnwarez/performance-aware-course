@@ -40,54 +40,6 @@ interface DecodedInstruction {
   operands: Operand[]
 }
 
-enum OperandType {
-  REG,
-  RM,
-  imm,
-}
-
-interface InstructionFormat {
-  opcode: number
-  mask: number
-  mnemonic: Mnemonic
-  operands: OperandType[]
-}
-
-const instructionFormats: InstructionFormat[] = [
-  // register to register
-  {
-    opcode: 0x88,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.RM, OperandType.REG],
-  },
-  {
-    opcode: 0x89,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.RM, OperandType.REG],
-  },
-  {
-    opcode: 0x8a,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.RM],
-  },
-  {
-    opcode: 0x8b,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.RM],
-  },
-  // immediate to register
-  {
-    opcode: 0xb0,
-    mask: 0xf0,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.imm],
-  },
-]
-
 const registerEncoding: { [d: number]: { [r: number]: Register } } = {
   1: {
     0b000: Register.ax,
@@ -111,8 +63,87 @@ const registerEncoding: { [d: number]: { [r: number]: Register } } = {
   },
 }
 
-function printInstruction(instruction: DecodedInstruction): string {
-  return `${instruction.mnemonic} ${instruction.operands.map((operand) => operand.toString()).join(', ')}`
+enum OperandType {
+  REG,
+  RM,
+  imm,
+}
+
+interface InstructionFormat {
+  opcode: number
+  mask: number
+  mnemonic: Mnemonic
+  operands: OperandType[]
+  // a mask to extract the fields from the first byte
+  D?: (instruction: number) => number
+  W: (instruction: number) => number
+  REG: (instruction: number) => number
+}
+
+const D = (shift: number) => (firstByte: number) => (firstByte >> shift) & 0b1
+const W = (shift: number) => (firstByte: number) => (firstByte >> shift) & 0b1
+// because REG can appear in the first or second byte, we need to pass the instruction as an argument
+const REG = (shift: number) => (instruction: number) => (instruction >> shift) & 0b111
+
+const instructionFormats: InstructionFormat[] = [
+  // register to register
+  {
+    opcode: 0x88,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.RM, OperandType.REG],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  {
+    opcode: 0x89,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.RM, OperandType.REG],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  {
+    opcode: 0x8a,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.RM],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  {
+    opcode: 0x8b,
+    mask: 0xfc,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.RM],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  // immediate to register
+  {
+    opcode: 0xb0,
+    mask: 0xf0,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.imm],
+    W: W(3),
+    REG: REG(0b111),
+  },
+]
+
+function extractField(instruction: number, position: number, mask: number): number {
+  return (instruction >> position) & mask
+}
+
+export function printInstruction(encodedInstruction: number): string {
+  const instruction = decodInstruction(encodedInstruction)
+  if (!instruction) {
+    return 'Invalid instruction'
+  }
+  return `${instruction.mnemonic} ${instruction.operands.map((operand) => (operand.type === 'register' ? operand.register : operand.value)).join(', ')}`
 }
 
 function decodInstruction(encodedInstruction: number): DecodedInstruction | undefined {
@@ -125,10 +156,14 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
     return undefined
   }
 
-  const d = (firstByte & 0x02) >> 1
-  const w = firstByte & 0x01
+  // Extract fields based on the format
+  const d = format.D ? format.D(firstByte) : 0
+  const w = format.W ? format.W(firstByte) : 0
+  // combine first and second bytes
+  const firstAndSecond = (firstByte << 8) | secondByte
+  const reg = format.REG ? format.REG(firstAndSecond) : 0
+
   const mod = (secondByte & 0xc0) >> 6
-  const reg = (secondByte & 0x38) >> 3
   const rm = secondByte & 0x07
 
   const operands: Operand[] = format.operands.map((operandType) => {
@@ -148,7 +183,8 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
     }
   })
 
-  if (format.mnemonic === Mnemonic.MOV && d === 1) {
+  // Swap operands if d bit is set (for MOV register-to-register instructions)
+  if (format.mnemonic === Mnemonic.MOV && format.D && d) {
     ;[operands[0], operands[1]] = [operands[1], operands[0]]
   }
 
@@ -158,4 +194,4 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
   }
 }
 
-console.log(decodInstruction(0xb001))
+console.log(decodInstruction(0xb10c))
