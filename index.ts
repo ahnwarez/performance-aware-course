@@ -132,6 +132,14 @@ const instructionFormats: InstructionFormat[] = [
     W: W(3),
     REG: REG(8),
   },
+  {
+    opcode: 0xb8,
+    mask: 0xf8,
+    mnemonic: Mnemonic.MOV,
+    operands: [OperandType.REG, OperandType.imm],
+    W: () => 1,
+    REG: (instruction) => instruction & 0x07,
+  },
 ]
 
 export function printInstruction(encodedInstruction: number): string {
@@ -171,6 +179,10 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
           return { type: 'memory', value: rm }
         }
       case OperandType.imm:
+        if (w === 1) {
+          const immediate = encodedInstruction & 0xffff
+          return { type: 'immediate', value: immediate }
+        }
         return { type: 'immediate', value: secondByte }
       default:
         throw new Error('Invalid operand type')
@@ -190,4 +202,6 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
 
 const mov_cx_bx = 0x89d9
 const mov_cl_12 = 0xb10c
-console.log(decodInstruction(mov_cx_bx))
+const mov_cx_12 = 0xb90c
+const mov_dx_3948 = 0xba6c0f
+console.log(decodInstruction(mov_dx_3948))

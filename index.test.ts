@@ -52,19 +52,15 @@ describe('8-bit immediate to register', () => {
   it('mov cl, 12', () => {
     expect(printInstruction(0xb10c)).toBe('mov cl, 12')
   })
-
-  it('mov cx, 12', () => {
-    expect(printInstruction(0xb90c)).toBe('mov cx, 12')
-  })
 })
 
 describe('16-bit immediate to register', () => {
   it('mov cx, 12', () => {
-    expect(printInstruction(0xb90d34)).toBe('mov cx, 12')
+    expect(printInstruction(0xb90c)).toBe('mov cx, 12')
   })
 
-  it('mov dx, 339488', () => {
-    expect(printInstruction(0xba6c0f)).toBe('mov dx, 339488')
+  it('mov dx, 3948', () => {
+    expect(printInstruction(0xba6c0f)).toBe('mov dx, 3948')
   })
 })
 
