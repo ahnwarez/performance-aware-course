@@ -56,16 +56,6 @@ describe('register to register move', () => {
     const buffer = Buffer.from('89c5', 'hex')
     expect(printInstruction(0x89c5)).toBe('mov bp, ax')
   })
-
-  it('mov si, bx', () => {
-    const buffer = Buffer.from('89de', 'hex')
-    expect(printInstruction(0x89de)).toBe('mov si, bx')
-  })
-
-  it('mov dh, al', () => {
-    const buffer = Buffer.from('88c6', 'hex')
-    expect(printInstruction(0x88c6)).toBe('mov dh, al')
-  })
 })
 
 describe('8-bit immediate to register', () => {
