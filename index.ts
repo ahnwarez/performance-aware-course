@@ -142,67 +142,75 @@ const instructionFormats: InstructionFormat[] = [
   },
 ]
 
-export function printInstruction(encodedInstruction: number): string {
-  const instruction = decodInstruction(encodedInstruction)
+export function printInstruction(instructionStream: Buffer): string {
+  const instruction = decodInstruction(instructionStream)
   if (!instruction) {
     return 'Invalid instruction'
   }
   return `${instruction.mnemonic} ${instruction.operands.map((operand) => (operand.type === 'register' ? operand.register : operand.value)).join(', ')}`
 }
 
-function decodInstruction(encodedInstruction: number): DecodedInstruction | undefined {
-  const firstByte = (encodedInstruction & 0xff00) >> 8
-  const secondByte = encodedInstruction & 0x00ff
-
-  // find the matching instruction format
-  const format = instructionFormats.find((format) => (firstByte & format.mask) === format.opcode)
-  if (!format) {
-    return undefined
-  }
-
-  const d = format.D ? format.D(firstByte) : 0
-  const w = format.W ? format.W(firstByte) : 0
-  const firstAndSecondByte = (firstByte << 8) | secondByte
-  const reg = format.REG ? format.REG(firstAndSecondByte) : 0
-
-  const mod = (secondByte & 0xc0) >> 6
-  const rm = secondByte & 0x07
-
-  const operands: Operand[] = format.operands.map((operandType) => {
-    switch (operandType) {
-      case OperandType.REG:
-        return { type: 'register', register: registerEncoding[w][reg] }
-      case OperandType.RM:
-        if (mod === 0b11) {
-          return { type: 'register', register: registerEncoding[w][rm] }
-        } else {
-          return { type: 'memory', value: rm }
-        }
-      case OperandType.imm:
-        if (w === 1) {
-          // exclude the first byte
-          return { type: 'immediate', value: encodedInstruction & 0xffff }
-        } else {
-          return { type: 'immediate', value: encodedInstruction & 0xff }
-        }
-      default:
-        throw new Error('Invalid operand type')
+function decodInstruction(instructionStream: Buffer): DecodedInstruction | undefined {
+  let cursor = 0
+  while (cursor < instructionStream.length) {
+    let cursor = 0
+    const firstByte = instructionStream[cursor++]
+    // find the matching instruction format
+    const format = instructionFormats.find((format) => (firstByte & format.mask) === format.opcode)
+    if (!format) {
+      return undefined
     }
-  })
+    const secondByte = instructionStream[cursor++]
+    const thirdByte = instructionStream[cursor++]
+    // const firstByte = (instructionStream & 0xff0000) >> 16
+    // const secondByte = (instructionStream & 0x00ff00) >> 8
+    // const thirdByte = instructionStream & 0x0000ff
 
-  // Swap operands if d bit is set (for MOV register-to-register instructions)
-  if (format.mnemonic === Mnemonic.MOV && format.D && d) {
-    ;[operands[0], operands[1]] = [operands[1], operands[0]]
-  }
+    const d = format.D ? format.D(firstByte) : 0
+    const w = format.W ? format.W(firstByte) : 0
+    const firstAndSecondByte = (firstByte << 8) | secondByte
+    const reg = format.REG ? format.REG(firstAndSecondByte) : 0
 
-  return {
-    mnemonic: format.mnemonic,
-    operands,
+    const mod = (secondByte & 0xc0) >> 6
+    const rm = secondByte & 0x07
+
+    const operands: Operand[] = format.operands.map((operandType) => {
+      switch (operandType) {
+        case OperandType.REG:
+          return { type: 'register', register: registerEncoding[w][reg] }
+        case OperandType.RM:
+          if (mod === 0b11) {
+            return { type: 'register', register: registerEncoding[w][rm] }
+          } else {
+            return { type: 'memory', value: rm }
+          }
+        case OperandType.imm:
+          if (w === 1) {
+            // combine the second and third bytes to get the 16-bit immediate value
+            const imm = secondByte | (thirdByte << 8)
+            return { type: 'immediate', value: imm }
+          } else {
+            return { type: 'immediate', value: secondByte }
+          }
+        default:
+          throw new Error('Invalid operand type')
+      }
+    })
+
+    // Swap operands if d bit is set (for MOV register-to-register instructions)
+    if (format.mnemonic === Mnemonic.MOV && format.D && d) {
+      ;[operands[0], operands[1]] = [operands[1], operands[0]]
+    }
+
+    return {
+      mnemonic: format.mnemonic,
+      operands,
+    }
   }
 }
 
-const mov_cx_bx = 0x89d9
-const mov_cl_12 = 0xb10c
-const mov_cx_12 = 0xb90c
-const mov_dx_3948 = 0xba6c0f
-console.log(decodInstruction(mov_dx_3948))
+const mov_cx_bx = [0x89, 0xd9]
+const mov_cl_12 = [0xb1, 0x0c]
+const mov_cx_12 = [0xb9, 0x0c]
+const mov_dx_3948 = [0xba, 0x6c, 0x0f]
+console.log(decodInstruction(Buffer.from(mov_dx_3948)))
