@@ -180,10 +180,11 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
         }
       case OperandType.imm:
         if (w === 1) {
-          const immediate = encodedInstruction & 0xffff
-          return { type: 'immediate', value: immediate }
+          // exclude the first byte
+          return { type: 'immediate', value: encodedInstruction & 0xffff }
+        } else {
+          return { type: 'immediate', value: encodedInstruction & 0xff }
         }
-        return { type: 'immediate', value: secondByte }
       default:
         throw new Error('Invalid operand type')
     }
