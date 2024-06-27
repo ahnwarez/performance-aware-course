@@ -130,13 +130,9 @@ const instructionFormats: InstructionFormat[] = [
     mnemonic: Mnemonic.MOV,
     operands: [OperandType.REG, OperandType.imm],
     W: W(3),
-    REG: REG(0b111),
+    REG: REG(8),
   },
 ]
-
-function extractField(instruction: number, position: number, mask: number): number {
-  return (instruction >> position) & mask
-}
 
 export function printInstruction(encodedInstruction: number): string {
   const instruction = decodInstruction(encodedInstruction)
@@ -156,12 +152,10 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
     return undefined
   }
 
-  // Extract fields based on the format
   const d = format.D ? format.D(firstByte) : 0
   const w = format.W ? format.W(firstByte) : 0
-  // combine first and second bytes
-  const firstAndSecond = (firstByte << 8) | secondByte
-  const reg = format.REG ? format.REG(firstAndSecond) : 0
+  const firstAndSecondByte = (firstByte << 8) | secondByte
+  const reg = format.REG ? format.REG(firstAndSecondByte) : 0
 
   const mod = (secondByte & 0xc0) >> 6
   const rm = secondByte & 0x07
@@ -194,4 +188,6 @@ function decodInstruction(encodedInstruction: number): DecodedInstruction | unde
   }
 }
 
-console.log(decodInstruction(0xb10c))
+const mov_cx_bx = 0x89d9
+const mov_cl_12 = 0xb10c
+console.log(decodInstruction(mov_cx_bx))
