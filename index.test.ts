@@ -1,82 +1,81 @@
 import { describe, it, expect } from 'vitest'
 
-import { decodeInstruction } from './index'
+import { printInstruction } from './index'
 
 describe('register to register move', () => {
   it('mov cx, bx', () => {
-    const buffer = Buffer.from('89d9', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov cx, bx')
+    expect(printInstruction(0x89d9)).toBe('mov cx, bx')
   })
 
   it('mov ch, ah', () => {
     const buffer = Buffer.from('88e5', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov ch, ah')
+    expect(printInstruction(0x88e5)).toBe('mov ch, ah')
   })
 
   it('mov dx, bx', () => {
     const buffer = Buffer.from('89da', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov dx, bx')
+    expect(printInstruction(0x89da)).toBe('mov dx, bx')
   })
 
   it('mov si, bx', () => {
     const buffer = Buffer.from('89de', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov si, bx')
+    expect(printInstruction(0x89de)).toBe('mov si, bx')
   })
 
   it('mov bx, di', () => {
     const buffer = Buffer.from('89fb', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov bx, di')
+    expect(printInstruction(0x89fb)).toBe('mov bx, di')
   })
 
   it('mov al, cl', () => {
     const buffer = Buffer.from('88c8', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov al, cl')
+    expect(printInstruction(0x88c8)).toBe('mov al, cl')
   })
 
   it('mov ch, ch', () => {
     const buffer = Buffer.from('88ed', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov ch, ch')
+    expect(printInstruction(0x88ed)).toBe('mov ch, ch')
   })
 
   it('mov bx, ax', () => {
     const buffer = Buffer.from('89c3', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov bx, ax')
+    expect(printInstruction(0x89c3)).toBe('mov bx, ax')
   })
 
   it('mov bx, si', () => {
     const buffer = Buffer.from('89f3', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov bx, si')
+    expect(printInstruction(0x89f3)).toBe('mov bx, si')
   })
 
   it('mov sp, di', () => {
     const buffer = Buffer.from('89fc', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov sp, di')
+    expect(printInstruction(0x89fc)).toBe('mov sp, di')
   })
 
   it('mov bp, ax', () => {
     const buffer = Buffer.from('89c5', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov bp, ax')
+    expect(printInstruction(0x89c5)).toBe('mov bp, ax')
   })
 
   it('mov si, bx', () => {
     const buffer = Buffer.from('89de', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov si, bx')
+    expect(printInstruction(0x89de)).toBe('mov si, bx')
   })
 
   it('mov dh, al', () => {
     const buffer = Buffer.from('88c6', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov dh, al')
+    expect(printInstruction(0x88c6)).toBe('mov dh, al')
   })
 })
 
 describe('8-bit immediate to register', () => {
   it('mov cl, 12', () => {
     const buffer = Buffer.from('b10c', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov cl, 12')
+    expect(printInstruction(0xb10c)).toBe('mov cl, 12')
   })
 
   it('mov cx, 12', () => {
     const buffer = Buffer.from('b90c', 'hex')
-    expect(decodeInstruction(buffer)).toBe('mov cx, 12')
+    expect(printInstruction(0xb90c)).toBe('mov cx, 12')
   })
 })
