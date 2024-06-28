@@ -61,7 +61,7 @@ describe('source address calculation plus 8-bit displacement', () => {
 
 describe('source address calculation plus 16-bit displacement', () => {
   it('mov al, [bx+si+4999]', () => {
-    expect(printInstruction(Buffer.from([0x8a, 0x60, 0x00, 0x12, 0x34]))).toBe('mov al, [bx+si+4999]')
+    expect(printInstruction(Buffer.from([0x8a, 0x80, 0x87, 0x13]))).toBe('mov al, [bx+si+4999]')
   })
 })
 
