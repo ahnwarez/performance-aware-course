@@ -70,7 +70,7 @@ describe('dest address calculation', () => {
     expect(printInstruction(Buffer.from([0x89, 0x09]))).toBe('mov [bx+di], cx')
   })
   it('mov [bp+si], cl', () => {
-    expect(printInstruction(Buffer.from([0x88, 0x08]))).toBe('mov [bp+si], cl')
+    expect(printInstruction(Buffer.from([0x88, 0x0a]))).toBe('mov [bp+si], cl')
   })
   it('mov [bp], ch', () => {
     expect(printInstruction(Buffer.from([0x88, 0x6e, 0x00]))).toBe('mov [bp], ch')
