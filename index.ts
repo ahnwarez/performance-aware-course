@@ -296,5 +296,28 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
   }
 }
 
+function execute(instructionStream: Buffer) {
+  const registers = {
+    cx: 0,
+    bx: 15,
+  }
+
+  const instruction = decodInstruction(instructionStream)
+  if (!instruction) {
+    console.log('Invalid instruction')
+    return
+  }
+
+  if (instruction.mnemonic === Mnemonic.MOV) {
+    const [destination, source] = instruction.operands
+    if (source.type === 'register' && destination.type === 'register') {
+      registers[destination.register] = registers[source.register]
+    }
+  }
+
+  return registers
+}
+
 const add_bx_bp = [0x03, 0x5e, 0x00]
-console.log(printInstruction(Buffer.from(add_bx_bp)))
+const mov = [0x89, 0xd9]
+console.log(execute(Buffer.from(mov)))
