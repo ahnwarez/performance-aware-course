@@ -176,7 +176,7 @@ export function printInstruction(instructionStream: Buffer): string {
           if (typeof operand.value === 'number') {
             return `[${operand.value}]`
           }
-          return `[${operand.value.join('+')}]`
+          return `[${operand.value.filter(Boolean).join('+')}]`
         default:
           return operand.value
       }
@@ -213,6 +213,9 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
           if (mod === 0b11) {
             // register to register
             return { type: 'register', register: registerEncoding[w][rm] }
+          } else if (mod === 0b01 && rm === 0b110) {
+            const val = registerEncoding[1][0b101]
+            return { type: 'memory', value: [val] }
           } else if (mod === 0b01) {
             // 8-bit displacement
             const val = baseRegister[rm](thirdByte)
@@ -222,6 +225,22 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
             const fourthByte = instructionStream[cursor++]
             const val = baseRegister[rm]((fourthByte << 8) | thirdByte)
             return { type: 'memory', value: val }
+          } else {
+            if (rm === 0b110) {
+              // direct addressing
+              if (w === 1) {
+                // 16-bit displacement
+                const val = (thirdByte << 8) | secondByte
+                return { type: 'memory', value: val }
+              } else {
+                // 8-bit displacement
+                return { type: 'memory', value: secondByte }
+              }
+            } else {
+              // indirect addressing
+              const val = baseRegister[rm]()
+              return { type: 'memory', value: val }
+            }
           }
         case OperandType.imm:
           if (w === 1) {
@@ -254,4 +273,6 @@ const mov_cx_12 = [0xb9, 0x0c]
 const mov_dx_3948 = [0xba, 0x6c, 0x0f]
 const mov_ah__bx_si_4 = [0x8a, 0x60, 0x04]
 const mov_al__bx_si_4999 = [0x8a, 0x80, 0x87, 0x13]
-console.log(printInstruction(Buffer.from(mov_al__bx_si_4999)))
+const mov_bx_di__cx = [0x89, 0x09]
+const mov_bp_ch = [0x88, 0x6e, 0x00]
+console.log(printInstruction(Buffer.from(mov_bp_ch)))
