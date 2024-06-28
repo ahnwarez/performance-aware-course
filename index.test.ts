@@ -80,7 +80,11 @@ describe('mov', () => {
 })
 
 describe('add', () => {
+  it('add bx, [bx+si]', () => {
+    expect(printInstruction(Buffer.from([0x03, 0x18]))).toBe('add bx, [bx+si]')
+  })
+
   it('add bx, [bp]', () => {
-    expect(printInstruction(Buffer.from([0x03, 0x18]))).toBe('add bx, [bp]')
+    expect(printInstruction(Buffer.from([0x03, 0x5e, 0x00]))).toBe('add bx, [bp]')
   })
 })
