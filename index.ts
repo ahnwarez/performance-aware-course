@@ -1,5 +1,6 @@
 enum Mnemonic {
   MOV = 'mov',
+  ADD = 'add',
 }
 
 enum Register {
@@ -156,6 +157,34 @@ const instructionFormats: InstructionFormat[] = [
     W: () => 1,
     REG: (instruction) => instruction & 0x07,
   },
+  // add
+  {
+    opcode: 0x00,
+    mask: 0xfe,
+    mnemonic: Mnemonic.ADD,
+    operands: [OperandType.RM, OperandType.REG],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  {
+    opcode: 0x01,
+    mask: 0xfe,
+    mnemonic: Mnemonic.ADD,
+    operands: [OperandType.RM, OperandType.REG],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
+  {
+    opcode: 0x02,
+    mask: 0xfe,
+    mnemonic: Mnemonic.ADD,
+    operands: [OperandType.RM, OperandType.REG],
+    D: D(1),
+    W: W(0),
+    REG: REG(3),
+  },
 ]
 
 export function printInstruction(instructionStream: Buffer): string {
@@ -256,7 +285,7 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
     })
 
     // Swap operands if d bit is set (for MOV register-to-register instructions)
-    if (format.mnemonic === Mnemonic.MOV && format.D && d) {
+    if (format.D && d) {
       ;[operands[0], operands[1]] = [operands[1], operands[0]]
     }
 
@@ -267,12 +296,5 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
   }
 }
 
-const mov_cx_bx = [0x89, 0xd9]
-const mov_cl_12 = [0xb1, 0x0c]
-const mov_cx_12 = [0xb9, 0x0c]
-const mov_dx_3948 = [0xba, 0x6c, 0x0f]
-const mov_ah__bx_si_4 = [0x8a, 0x60, 0x04]
-const mov_al__bx_si_4999 = [0x8a, 0x80, 0x87, 0x13]
-const mov_bx_di__cx = [0x89, 0x09]
-const mov_bp_ch = [0x88, 0x6e, 0x00]
-console.log(printInstruction(Buffer.from(mov_bp_ch)))
+const add_bx_bp = [0x03, 0x5e, 0x00]
+console.log(printInstruction(Buffer.from(add_bx_bp)))
