@@ -213,9 +213,14 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
           if (mod === 0b11) {
             // register to register
             return { type: 'register', register: registerEncoding[w][rm] }
-          } else {
-            // memory to register or register to memory
+          } else if (mod === 0b01) {
+            // 8-bit displacement
             const val = baseRegister[rm](thirdByte)
+            return { type: 'memory', value: val }
+          } else if (mod === 0b10) {
+            // 16-bit displacement
+            const fourthByte = instructionStream[cursor++]
+            const val = baseRegister[rm]((fourthByte << 8) | thirdByte)
             return { type: 'memory', value: val }
           }
         case OperandType.imm:
@@ -248,4 +253,5 @@ const mov_cl_12 = [0xb1, 0x0c]
 const mov_cx_12 = [0xb9, 0x0c]
 const mov_dx_3948 = [0xba, 0x6c, 0x0f]
 const mov_ah__bx_si_4 = [0x8a, 0x60, 0x04]
-console.log(printInstruction(Buffer.from(mov_ah__bx_si_4)))
+const mov_al__bx_si_4999 = [0x8a, 0x80, 0x87, 0x13]
+console.log(printInstruction(Buffer.from(mov_al__bx_si_4999)))
