@@ -32,6 +32,10 @@ type Operand =
     }
   | {
       type: 'memory'
+      value: number | [Register, Register] | [Register, Register, number] | [number] | [Register]
+    }
+  | {
+      type: 'disp'
       value: number
     }
 
@@ -61,6 +65,18 @@ const registerEncoding: { [d: number]: { [r: number]: Register } } = {
     0b110: Register.dh,
     0b111: Register.bh,
   },
+}
+
+// effective address calculation
+const baseRegister = {
+  0b000: (val: number) => [Register.bx, Register.si, val],
+  0b001: (val: number) => [Register.bx, Register.di, val],
+  0b010: (val: number) => [Register.bp, Register.si, val],
+  0b011: (val: number) => [Register.bp, Register.di, val],
+  0b100: () => [Register.si],
+  0b101: () => [Register.di],
+  0b110: (val: number) => [val],
+  0b111: () => [Register.bx],
 }
 
 enum OperandType {
@@ -147,7 +163,25 @@ export function printInstruction(instructionStream: Buffer): string {
   if (!instruction) {
     return 'Invalid instruction'
   }
-  return `${instruction.mnemonic} ${instruction.operands.map((operand) => (operand.type === 'register' ? operand.register : operand.value)).join(', ')}`
+
+  // return `${instruction.mnemonic} ${instruction.operands.map((operand) => (operand.type === 'register' ? operand.register : operand.value)).join(', ')}`
+  return `${instruction.mnemonic} ${instruction.operands
+    .map((operand) => {
+      switch (operand.type) {
+        case 'register':
+          return operand.register
+        case 'immediate':
+          return operand.value
+        case 'memory':
+          if (typeof operand.value === 'number') {
+            return `[${operand.value}]`
+          }
+          return `[${operand.value.join('+')}]`
+        default:
+          return operand.value
+      }
+    })
+    .join(', ')}`
 }
 
 function decodInstruction(instructionStream: Buffer): DecodedInstruction | undefined {
@@ -162,9 +196,6 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
     }
     const secondByte = instructionStream[cursor++]
     const thirdByte = instructionStream[cursor++]
-    // const firstByte = (instructionStream & 0xff0000) >> 16
-    // const secondByte = (instructionStream & 0x00ff00) >> 8
-    // const thirdByte = instructionStream & 0x0000ff
 
     const d = format.D ? format.D(firstByte) : 0
     const w = format.W ? format.W(firstByte) : 0
@@ -180,9 +211,12 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
           return { type: 'register', register: registerEncoding[w][reg] }
         case OperandType.RM:
           if (mod === 0b11) {
+            // register to register
             return { type: 'register', register: registerEncoding[w][rm] }
           } else {
-            return { type: 'memory', value: rm }
+            // memory to register or register to memory
+            const val = baseRegister[rm](thirdByte)
+            return { type: 'memory', value: val }
           }
         case OperandType.imm:
           if (w === 1) {
@@ -213,4 +247,5 @@ const mov_cx_bx = [0x89, 0xd9]
 const mov_cl_12 = [0xb1, 0x0c]
 const mov_cx_12 = [0xb9, 0x0c]
 const mov_dx_3948 = [0xba, 0x6c, 0x0f]
-console.log(decodInstruction(Buffer.from(mov_dx_3948)))
+const mov_ah__bx_si_4 = [0x8a, 0x60, 0x04]
+console.log(printInstruction(Buffer.from(mov_ah__bx_si_4)))
