@@ -92,6 +92,22 @@ describe('add', () => {
     expect(printInstruction(Buffer.from([0x83, 0xc6, 0x02]))).toBe('add si, 2')
   })
 
+  it('add bp, 2', () => {
+    expect(printInstruction(Buffer.from([0x83, 0xc5, 0x02]))).toBe('add bp, 2')
+  })
+
+  it('add cx, 8', () => {
+    expect(printInstruction(Buffer.from([0x83, 0xc1, 0x08]))).toBe('add cx, 8')
+  })
+
+  it('add bx, [bp]', () => {
+    expect(printInstruction(Buffer.from([0x03, 0x5e, 0x00]))).toBe('add bx, [bp]')
+  })
+
+  it('add cx, [bx+2]', () => {
+    expect(printInstruction(Buffer.from([0x03, 0x4f, 0x02]))).toBe('add cx, [bx+2]')
+  })
+
   it('add ax, 1000', () => {
     expect(printInstruction(Buffer.from([0x05, 0xe8, 0x03]))).toBe('add ax, 1000')
   })
