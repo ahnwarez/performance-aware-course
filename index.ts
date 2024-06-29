@@ -85,13 +85,9 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
             }
           }
         case OperandType.imm:
-          if (w === 1) {
-            // combine the second and third bytes to get the 16-bit immediate value
-            const imm = secondByte | (thirdByte << 8)
-            return { type: 'immediate', value: imm }
-          } else {
-            return { type: 'immediate', value: secondByte }
-          }
+          const s = format.S ? format.S(firstByte) : 0
+          const imm = format.IMM(s, w, secondByte, thirdByte)
+          return { type: 'immediate', value: imm }
         default:
           throw new Error('Invalid operand type')
       }
@@ -133,8 +129,9 @@ function execute(instructionStream: Buffer) {
 
 const mov_cx_bx = [0x89, 0xd9]
 const mov_cl_12 = [0xb1, 0x0c]
+const mov_cx_12 = [0xb9, 0x0c]
 const add_bx_bp = [0x03, 0x5e, 0x00]
 const mov = [0x89, 0xd9]
 const add_al_9 = [0x04, 0x09]
 const add_si_2 = [0x83, 0xc6, 0x02]
-console.log(printInstruction(Buffer.from(mov_cl_12)))
+console.log(printInstruction(Buffer.from(add_si_2)))

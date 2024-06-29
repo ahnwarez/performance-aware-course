@@ -96,6 +96,7 @@ interface InstructionFormat {
   W: (instruction: number) => number
   REG: (instruction: number) => number
   S?: (instruction: number) => number
+  IMM?: (s: number, w: number, secondByte: number, thirdByte: number) => number
 }
 
 const D = (shift: number) => (firstByte: number) => (firstByte >> shift) & 0b1
@@ -122,6 +123,7 @@ export const instructionFormats: InstructionFormat[] = [
     operands: [OperandType.REG, OperandType.imm],
     W: W(3),
     REG: REG(8),
+    IMM: (s: number, w: number, secondByte: number, thirdByte: number) => (w === 1 ? secondByte | (thirdByte << 8) : secondByte),
   },
   // add
   {
@@ -148,11 +150,16 @@ export const instructionFormats: InstructionFormat[] = [
     operands: [OperandType.RM, OperandType.imm],
     W: W(0),
     REG: () => 0b000,
+    // check if the second bit is set
+    S: (firstByte: number) => (firstByte & 0b10) >> 1,
+    IMM: (s: number, w: number, secondByte: number, thirdByte: number) => {
+      return s === 1 ? thirdByte : 0
+    },
   },
   // immediate to accumulator
   {
     opcode: 0x04,
-    shiftLeft: 3,
+    shiftLeft: 1,
     mnemonic: Mnemonic.ADD,
     operands: [OperandType.REG, OperandType.imm],
     W: W(0),
