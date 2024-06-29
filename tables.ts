@@ -158,11 +158,14 @@ export const instructionFormats: InstructionFormat[] = [
   },
   // immediate to accumulator
   {
-    opcode: 0x04,
+    opcode: 0x02,
     shiftLeft: 1,
     mnemonic: Mnemonic.ADD,
     operands: [OperandType.REG, OperandType.imm],
     W: W(0),
     REG: () => 0b000,
+    IMM: (s: number, w: number, secondByte: number, thirdByte: number) => {
+      return w === 1 ? secondByte | (thirdByte << 8) : secondByte
+    },
   },
 ]
