@@ -87,4 +87,16 @@ describe('add', () => {
   it('add bx, [bp]', () => {
     expect(printInstruction(Buffer.from([0x03, 0x5e, 0x00]))).toBe('add bx, [bp]')
   })
+
+  it('add si, 2', () => {
+    expect(printInstruction(Buffer.from([0x83, 0xc6, 0x02]))).toBe('add si, 2')
+  })
+
+  it('add ax, 1000', () => {
+    expect(printInstruction(Buffer.from([0x05, 0xe8, 0x03]))).toBe('add ax, 1000')
+  })
+
+  it('add al, 9', () => {
+    expect(printInstruction(Buffer.from([0x04, 0x09]))).toBe('add al, 9')
+  })
 })
