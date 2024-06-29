@@ -134,4 +134,5 @@ const add_bx_bp = [0x03, 0x5e, 0x00]
 const mov = [0x89, 0xd9]
 const add_al_9 = [0x04, 0x09]
 const add_si_2 = [0x83, 0xc6, 0x02]
-console.log(printInstruction(Buffer.from(add_si_2)))
+const add_ax_1000 = [0x05, 0xe8, 0x03]
+console.log(printInstruction(Buffer.from(add_ax_1000)))
