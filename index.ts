@@ -61,6 +61,9 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
           } else if (mod === 0b01) {
             // 8-bit displacement
             const val = baseRegister[rm](thirdByte)
+            if (format.DISP) {
+              return { type: 'memory', value: [val, format.DISP(thirdByte, instructionStream[cursor++])] }
+            }
             return { type: 'memory', value: val }
           } else if (mod === 0b10) {
             // 16-bit displacement
@@ -135,4 +138,5 @@ const mov = [0x89, 0xd9]
 const add_al_9 = [0x04, 0x09]
 const add_si_2 = [0x83, 0xc6, 0x02]
 const add_ax_1000 = [0x05, 0xe8, 0x03]
-console.log(printInstruction(Buffer.from(add_ax_1000)))
+const add_cx_bx_2 = [0x03, 0x4f, 0x02]
+console.log(printInstruction(Buffer.from(add_cx_bx_2)))

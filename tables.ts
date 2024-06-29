@@ -134,6 +134,7 @@ export const instructionFormats: InstructionFormat[] = [
     D: D(1),
     W: W(0),
     REG: REG(3),
+    DISP: (thirdByte: number, fourthByte: number) => (fourthByte << 8) | thirdByte,
   },
   {
     opcode: 0x80,
