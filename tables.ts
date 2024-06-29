@@ -88,13 +88,14 @@ export enum OperandType {
 
 interface InstructionFormat {
   opcode: number
-  mask: number
+  shiftLeft: number
   mnemonic: Mnemonic
   operands: OperandType[]
   // a mask to extract the fields from the first byte
   D?: (instruction: number) => number
   W: (instruction: number) => number
   REG: (instruction: number) => number
+  S?: (instruction: number) => number
 }
 
 const D = (shift: number) => (firstByte: number) => (firstByte >> shift) & 0b1
@@ -105,62 +106,27 @@ const REG = (shift: number) => (instruction: number) => (instruction >> shift) &
 export const instructionFormats: InstructionFormat[] = [
   // register to register
   {
-    opcode: 0x88,
-    mask: 0xfc,
+    opcode: 0b100010,
+    shiftLeft: 2,
     mnemonic: Mnemonic.MOV,
     operands: [OperandType.RM, OperandType.REG],
-    D: D(1),
-    W: W(0),
-    REG: REG(3),
-  },
-  {
-    opcode: 0x89,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.RM, OperandType.REG],
-    D: D(1),
-    W: W(0),
-    REG: REG(3),
-  },
-  {
-    opcode: 0x8a,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.RM],
-    D: D(1),
-    W: W(0),
-    REG: REG(3),
-  },
-  {
-    opcode: 0x8b,
-    mask: 0xfc,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.RM],
     D: D(1),
     W: W(0),
     REG: REG(3),
   },
   // immediate to register
   {
-    opcode: 0xb0,
-    mask: 0xf0,
+    opcode: 0b1011,
+    shiftLeft: 4,
     mnemonic: Mnemonic.MOV,
     operands: [OperandType.REG, OperandType.imm],
     W: W(3),
     REG: REG(8),
   },
-  {
-    opcode: 0xb8,
-    mask: 0xf8,
-    mnemonic: Mnemonic.MOV,
-    operands: [OperandType.REG, OperandType.imm],
-    W: () => 1,
-    REG: (instruction) => instruction & 0x07,
-  },
   // add
   {
-    opcode: 0x00,
-    mask: 0xfe,
+    opcode: 0b000000,
+    shiftLeft: 2,
     mnemonic: Mnemonic.ADD,
     operands: [OperandType.RM, OperandType.REG],
     D: D(1),
@@ -168,21 +134,28 @@ export const instructionFormats: InstructionFormat[] = [
     REG: REG(3),
   },
   {
-    opcode: 0x01,
-    mask: 0xfe,
+    opcode: 0x80,
+    shiftLeft: 2,
     mnemonic: Mnemonic.ADD,
-    operands: [OperandType.RM, OperandType.REG],
-    D: D(1),
+    operands: [OperandType.RM, OperandType.imm],
     W: W(0),
-    REG: REG(3),
+    REG: () => 0b000,
   },
   {
-    opcode: 0x02,
-    mask: 0xfe,
+    opcode: 0b100000,
+    shiftLeft: 2,
     mnemonic: Mnemonic.ADD,
-    operands: [OperandType.RM, OperandType.REG],
-    D: D(1),
+    operands: [OperandType.RM, OperandType.imm],
     W: W(0),
-    REG: REG(3),
+    REG: () => 0b000,
+  },
+  // immediate to accumulator
+  {
+    opcode: 0x04,
+    shiftLeft: 3,
+    mnemonic: Mnemonic.ADD,
+    operands: [OperandType.REG, OperandType.imm],
+    W: W(0),
+    REG: () => 0b000,
   },
 ]

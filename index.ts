@@ -32,7 +32,7 @@ function decodInstruction(instructionStream: Buffer): DecodedInstruction | undef
     let cursor = 0
     const firstByte = instructionStream[cursor++]
     // find the matching instruction format
-    const format = instructionFormats.find((format) => (firstByte & format.mask) === format.opcode)
+    const format = instructionFormats.find((format) => firstByte >> format.shiftLeft === format.opcode)
     if (!format) {
       return undefined
     }
@@ -131,6 +131,10 @@ function execute(instructionStream: Buffer) {
   return registers
 }
 
+const mov_cx_bx = [0x89, 0xd9]
+const mov_cl_12 = [0xb1, 0x0c]
 const add_bx_bp = [0x03, 0x5e, 0x00]
 const mov = [0x89, 0xd9]
-console.log(printInstruction(Buffer.from(mov)))
+const add_al_9 = [0x04, 0x09]
+const add_si_2 = [0x83, 0xc6, 0x02]
+console.log(printInstruction(Buffer.from(mov_cl_12)))
