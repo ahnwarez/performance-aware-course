@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { printInstruction } from './index'
+import { printInstruction } from './my-decoder'
 
 describe('mov', () => {
   describe('register to register move', () => {
