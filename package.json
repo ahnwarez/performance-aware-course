@@ -5,13 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "comp": "tsx index.ts > index.asm && fc index.asm",
-    "dev": "tsx index.ts",
-    "test": "vitest --ui"
+    "test": "tsx sim8086_example.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "~1.2.1",
+    "node-addon-api": "^1.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20.14.7",
     "@vitest/ui": "^1.6.0",
