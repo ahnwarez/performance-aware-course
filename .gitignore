@@ -1,3 +1,6 @@
 node_modules
 build/
 .DS_Store
+part1/contrib-nodejs-decoder/libsim86.so
+part2/data
+libsim86.so
