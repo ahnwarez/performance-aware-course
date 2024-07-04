@@ -3,26 +3,19 @@ export enum TokenType {
   CURLY_CLOSE = 'CURLY_CLOSE',
   BRACKET_OPEN = 'BRACKET_OPEN',
   BRACKET_CLOSE = 'BRACKET_CLOSE',
-  QUOTES = 'QUOTES',
-  LABEL = 'LABEL',
   COLON = 'COLON',
   COMMA = 'COMMA',
   NUMBER = 'NUMBER',
-
-  SPACE = 'SPACE',
+  NULL = 'NULL',
+  STRING = 'STRING',
+  TRUE = 'TRUE',
+  FALSE = 'FALSE',
 }
 
-export type Token =
-  | { type: TokenType.CURLY_OPEN }
-  | { type: TokenType.CURLY_CLOSE }
-  | { type: TokenType.BRACKET_OPEN }
-  | { type: TokenType.BRACKET_CLOSE }
-  | { type: TokenType.QUOTES }
-  | { type: TokenType.LABEL; value: string }
-  | { type: TokenType.COLON }
-  | { type: TokenType.COMMA }
-  | { type: TokenType.NUMBER; value: number }
-  | { type: TokenType.SPACE }
+export interface Token {
+  type: TokenType
+  value: string
+}
 
 export function tokenize(input: string) {
   let cursor = 0
@@ -30,47 +23,96 @@ export function tokenize(input: string) {
 
   const tokens: Token[] = []
   while (cursor < inputLength) {
-    const character = input[cursor]
+    let character = input[cursor]
 
     if (character === '[') {
-      tokens.push({ type: TokenType.BRACKET_OPEN })
+      tokens.push({ type: TokenType.BRACKET_OPEN, value: '[' })
+      cursor++
+      continue
     }
     if (character === ']') {
-      tokens.push({ type: TokenType.BRACKET_CLOSE })
+      tokens.push({ type: TokenType.BRACKET_CLOSE, value: ']' })
+      cursor++
+      continue
     }
 
     if (character === '{') {
-      tokens.push({ type: TokenType.CURLY_OPEN })
+      tokens.push({ type: TokenType.CURLY_OPEN, value: '{' })
+      cursor++
+      continue
     }
 
     if (character === '}') {
-      tokens.push({ type: TokenType.CURLY_CLOSE })
-    }
-
-    if (character === ' ') {
-      // do nothing
-    }
-
-    if (character === '"') {
-      tokens.push({ type: TokenType.QUOTES })
+      tokens.push({ type: TokenType.CURLY_CLOSE, value: '}' })
+      cursor++
+      continue
     }
 
     if (character === ':') {
-      tokens.push({ type: TokenType.COLON })
+      tokens.push({ type: TokenType.COLON, value: ':' })
+      cursor++
+      continue
     }
 
-    if (character.match(/[a-z]/)) {
-      let label = ''
-      while (input[cursor].match(/[a-z]/)) {
-        label += input[cursor]
-        cursor++
+    if (character === ',') {
+      tokens.push({ type: TokenType.COMMA, value: ',' })
+      cursor++
+      continue
+    }
+
+    if (character === '"') {
+      let value = ''
+      character = input[++cursor]
+      value += character
+      while (character !== '"') {
+        character = input[++cursor]
+        value += character
       }
-      cursor--
-      tokens.push({ type: TokenType.LABEL, value: label })
+      tokens.push({ type: TokenType.STRING, value })
+      cursor++
+      continue
     }
 
-    cursor++
+    // For number, boolean and null values
+    if (/[\d\w]/.test(character)) {
+      // if it's a number or a word character
+      let value = ''
+      while (/[\d\w]/.test(character)) {
+        value += character
+        character = input[++cursor]
+      }
+
+      if (isNumber(value)) tokens.push({ type: TokenType.NUMBER, value })
+      else if (isBooleanTrue(value))
+        tokens.push({ type: TokenType.TRUE, value })
+      else if (isBooleanFalse(value))
+        tokens.push({ type: TokenType.FALSE, value })
+      else if (isNull(value)) tokens.push({ type: TokenType.NULL, value })
+      else throw new Error('Unexpected value: ' + value)
+      continue
+    }
+
+    // Skip whitespace
+    if (/\s/.test(character)) {
+      cursor++
+      continue
+    }
+
+    throw new Error('Unexpected character: ' + character)
   }
 
   return tokens
+}
+
+function isNumber(value: string) {
+  return !isNaN(Number(value))
+}
+function isBooleanTrue(value: string) {
+  return value === 'true'
+}
+function isBooleanFalse(value: string) {
+  return value === 'false'
+}
+function isNull(value: string) {
+  return value === 'null'
 }
