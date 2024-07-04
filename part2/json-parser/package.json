@@ -1,0 +1,25 @@
+{
+  "name": "computer-enhance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx parser.ts",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "gypfile": true,
+  "devDependencies": {
+    "@types/node": "^20.14.7",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  }
+}
