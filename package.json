@@ -25,6 +25,6 @@
   "prettier": {
     "semi": false,
     "singleQuote": true,
-    "printWidth": 1000
+    "printWidth": 80
   }
 }
