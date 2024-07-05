@@ -19,9 +19,9 @@ it('{}', () => {
 it('{ "key": "value" }', () => {
   expect(tokenize('{"key":"value"}')).toStrictEqual([
     { type: 'CURLY_OPEN', value: '{' },
-    { type: 'STRING', value: 'key"' },
+    { type: 'STRING', value: 'key' },
     { type: 'COLON', value: ':' },
-    { type: 'STRING', value: 'value"' },
+    { type: 'STRING', value: 'value' },
     { type: 'CURLY_CLOSE', value: '}' },
   ])
 })

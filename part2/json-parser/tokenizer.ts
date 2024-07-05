@@ -61,25 +61,32 @@ export function tokenize(input: string) {
     }
 
     if (character === '"') {
+      cursor++
       let value = ''
-      character = input[++cursor]
-      value += character
-      while (character !== '"') {
-        character = input[++cursor]
-        value += character
+      while (input[cursor] !== '"') {
+        value += input[cursor]
+        cursor++
       }
       tokens.push({ type: TokenType.STRING, value })
       cursor++
       continue
     }
 
+    // For number (integer or float), boolean and null values
+    const regex = /[\d\w]/
     // For number, boolean and null values
-    if (/[\d\w]/.test(character)) {
+    if (regex.test(character)) {
       // if it's a number or a word character
       let value = ''
-      while (/[\d\w]/.test(character)) {
+      while (regex.test(character)) {
         value += character
         character = input[++cursor]
+
+        // check if there is a decimal point
+        if (character === '.') {
+          value += character
+          character = input[++cursor]
+        }
       }
 
       if (isNumber(value)) tokens.push({ type: TokenType.NUMBER, value })
