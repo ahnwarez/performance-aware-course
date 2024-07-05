@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest'
 
-import { tokenize, TokenType } from './parser'
+import { tokenize, TokenType } from './tokenizer'
 
 it('[]', () => {
   expect(tokenize('[]')).toStrictEqual([
