@@ -12,7 +12,6 @@ const filePath = path.join(__dirname, '/data/small.json')
 function writeOneMillionTimes(
   count: number,
   writer: WriteStream,
-  method: 'uniform' | 'cluster',
   seed: number,
   callback = ({ expectedSum: number }) => {}
 ) {
@@ -38,34 +37,25 @@ function writeOneMillionTimes(
         y1: 0,
       }
 
-      if (method === 'cluster') {
-        const clusterIndex = Math.min(Math.floor(i / clusterSize), clusters - 1)
-        const currentBounds = bounds[clusterIndex]
-        data = {
-          x0: faker.number.float({
-            min: currentBounds.latLowerBound,
-            max: currentBounds.latUpperBound,
-          }),
-          y0: faker.number.float({
-            min: currentBounds.longLowerBound,
-            max: currentBounds.longUpperBound,
-          }),
-          x1: faker.number.float({
-            min: currentBounds.latLowerBound,
-            max: currentBounds.latUpperBound,
-          }),
-          y1: faker.number.float({
-            min: currentBounds.longLowerBound,
-            max: currentBounds.longUpperBound,
-          }),
-        }
-      } else {
-        data = {
-          x0: faker.location.latitude(),
-          y0: faker.location.longitude(),
-          x1: faker.location.latitude(),
-          y1: faker.location.longitude(),
-        }
+      const clusterIndex = Math.min(Math.floor(i / clusterSize), clusters - 1)
+      const currentBounds = bounds[clusterIndex]
+      data = {
+        x0: faker.number.float({
+          min: currentBounds.latLowerBound,
+          max: currentBounds.latUpperBound,
+        }),
+        y0: faker.number.float({
+          min: currentBounds.longLowerBound,
+          max: currentBounds.longUpperBound,
+        }),
+        x1: faker.number.float({
+          min: currentBounds.latLowerBound,
+          max: currentBounds.latUpperBound,
+        }),
+        y1: faker.number.float({
+          min: currentBounds.longLowerBound,
+          max: currentBounds.longUpperBound,
+        }),
       }
 
       expectedSum +=
@@ -92,15 +82,13 @@ function writeOneMillionTimes(
 
 async function main() {
   const countString = process.argv[2]
-  const method = (process.argv[3] as 'uniform' | 'cluster') || 'uniform'
   const seed = process.argv[4] ? parseInt(process.argv[4], 10) : 123
   const count = parseInt(countString, 10) || 1000
   const fd = await fs.open(filePath, 'w')
   const writer = fd.createWriteStream()
 
-  writeOneMillionTimes(count, writer, method, seed, (data) => {
+  writeOneMillionTimes(count, writer, seed, (data) => {
     console.table({
-      method,
       seed,
       count,
       expectedSum: data.expectedSum,
