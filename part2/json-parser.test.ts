@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest'
 
-import { parse } from './parser'
+import { parse } from './json-parser'
 
 it('{ "pairs": [ { "x0": 2.888 }]  }', () => {
   const input = '{ "pairs": [ { "x0": 2.888 }]  }'
