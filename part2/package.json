@@ -21,5 +21,8 @@
   "prettier": {
     "semi": false,
     "singleQuote": true
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.4.1"
   }
 }

@@ -1,4 +1,5 @@
 import { Token, tokenize, TokenType } from './tokenizer'
+import { performance, PerformanceObserver } from 'perf_hooks'
 
 enum NodeType {
   Object = 'Object',
@@ -116,4 +117,18 @@ export function parse(input: string): any {
   return toObject(ast(tokenize(input)))
 }
 
+const observer = new PerformanceObserver((list) => {
+  list.getEntries().forEach((entry) => {
+    console.table({
+      name: entry.name,
+      duration: entry.duration,
+    })
+  })
+})
+
+observer.observe({ entryTypes: ['function'], buffered: true })
+
+const timedParse = performance.timerify(parse)
 console.log(parse('{"key": "value" }'))
+
+timedParse('{"key": "value" }')
