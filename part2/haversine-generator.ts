@@ -9,7 +9,13 @@ import { ReferenceHaversine } from './haversine'
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 const filePath = path.join(__dirname, '/data/small.json')
 
-function writeOneMillionTimes(count: number, writer: WriteStream, method: 'uniform' | 'cluster', seed: number, callback = ({ expectedSum: number }) => {}) {
+function writeOneMillionTimes(
+  count: number,
+  writer: WriteStream,
+  method: 'uniform' | 'cluster',
+  seed: number,
+  callback = ({ expectedSum: number }) => {}
+) {
   const clusters = 6
   const clusterSize = count / clusters
   let i = 0
@@ -36,10 +42,22 @@ function writeOneMillionTimes(count: number, writer: WriteStream, method: 'unifo
         const clusterIndex = Math.min(Math.floor(i / clusterSize), clusters - 1)
         const currentBounds = bounds[clusterIndex]
         data = {
-          x0: faker.number.float({ min: currentBounds.latLowerBound, max: currentBounds.latUpperBound }),
-          y0: faker.number.float({ min: currentBounds.longLowerBound, max: currentBounds.longUpperBound }),
-          x1: faker.number.float({ min: currentBounds.latLowerBound, max: currentBounds.latUpperBound }),
-          y1: faker.number.float({ min: currentBounds.longLowerBound, max: currentBounds.longUpperBound }),
+          x0: faker.number.float({
+            min: currentBounds.latLowerBound,
+            max: currentBounds.latUpperBound,
+          }),
+          y0: faker.number.float({
+            min: currentBounds.longLowerBound,
+            max: currentBounds.longUpperBound,
+          }),
+          x1: faker.number.float({
+            min: currentBounds.latLowerBound,
+            max: currentBounds.latUpperBound,
+          }),
+          y1: faker.number.float({
+            min: currentBounds.longLowerBound,
+            max: currentBounds.longUpperBound,
+          }),
         }
       } else {
         data = {
@@ -50,7 +68,8 @@ function writeOneMillionTimes(count: number, writer: WriteStream, method: 'unifo
         }
       }
 
-      expectedSum += sumCoef * ReferenceHaversine(data.x0, data.y0, data.x1, data.y1)
+      expectedSum +=
+        sumCoef * ReferenceHaversine(data.x0, data.y0, data.x1, data.y1)
       if (i === count) {
         // Last time!
         writer.write(JSON.stringify(data) + '\n', 'utf8', () => {
@@ -87,6 +106,7 @@ async function main() {
       expectedSum: data.expectedSum,
     })
     writer.close()
+    fd.close()
   })
 }
 
