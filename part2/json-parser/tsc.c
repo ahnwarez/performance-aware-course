@@ -1,7 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 static inline uint64_t
+#define u64 uint64_t
+#define f64 double
 
 arm64_cntfrq(void)
 {
@@ -25,34 +28,74 @@ rdtsc(void)
     return arm64_cntvct();
 }
 
-void function_to_measure()
+static uint64_t GetOSTimerFreq(void)
 {
-    for (int i = 0; i < 1000000; i++)
+    return 1000000;
+}
+
+static uint64_t ReadOSTimer(void)
+{
+    struct timeval Value;
+    gettimeofday(&Value, NULL);
+    u_int64_t Result = GetOSTimerFreq() * (u64)Value.tv_sec + Value.tv_usec;
+    return Result;
+}
+
+void function_to_measure(int total_iterations)
+{
+    for (int i = 0; i < total_iterations; i++)
     {
-        /* code */
     }
+}
+
+void Process_OS_Timer()
+{
+    u64 OSFreq = GetOSTimerFreq();
+    printf("OS Timer Frequency: %lu\n", OSFreq);
+
+    u64 OSStart = ReadOSTimer();
+    u64 OSEnd = 0;
+    u64 OSElapsed = 0;
+
+    while (OSElapsed < OSFreq)
+    {
+        OSEnd = ReadOSTimer();
+        OSElapsed = OSEnd - OSStart;
+    }
+
+    printf(" OS Timer: %llu -> %llu = %llu elapsed\n", OSStart, OSEnd, OSElapsed);
+    printf(" OS Seconds: %.4f\n", (double)OSElapsed / (double)OSFreq);
+}
+
+void Process_CPU_Timer()
+{
+    u64 OSFreq = GetOSTimerFreq();
+    printf("OS Timer Frequency: %lu\n", OSFreq);
+
+    u64 CPUStart = rdtsc();
+    u64 OSStart = ReadOSTimer();
+    u64 OSEnd = 0;
+    u64 OSElapsed = 0;
+
+    while (OSElapsed < OSFreq)
+    {
+        OSEnd = ReadOSTimer();
+        OSElapsed = OSEnd - OSStart;
+    }
+
+    u64 CPUEnd = rdtsc();
+    u64 CPUElapsed = CPUEnd - CPUStart;
+
+    printf("   OS Timer: %llu -> %llu = %llu elapsed\n", OSStart, OSEnd, OSElapsed);
+    printf(" OS Seconds: %.4f\n", (f64)OSElapsed / (f64)OSFreq);
+
+    printf("  CPU Timer: %llu -> %llu = %llu elapsed\n", CPUStart, CPUEnd, CPUElapsed);
 }
 
 int main(void)
 {
-    u_int16_t start, end, elapsed;
-    start = rdtsc();
-    function_to_measure();
-    end = rdtsc();
-    elapsed = end - start;
-
-    printf("Elapsed time: %u\n", elapsed);
-
-    uint64_t freq = arm64_cntfrq();
-    
-    printf("CPU frequency: %lu Hz\n", freq);
-    printf("TSC: %lu\n", rdtsc());
-
-    // now we can calculate the time taken by the function
-    // we have the frequency of the CPU and the number of cycles
-    // so we can calculate the time taken by the function
-
-    double time_taken = (double)elapsed / freq;
-    printf("Time taken by the function: %f\n", time_taken);
+    Process_OS_Timer();
+    printf("===========================================\n");
+    Process_CPU_Timer();
     return 0;
 }
