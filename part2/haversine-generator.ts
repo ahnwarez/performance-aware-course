@@ -5,62 +5,37 @@ import url from 'url'
 import { faker } from '@faker-js/faker'
 
 import { ReferenceHaversine } from './haversine'
+import { floatArrayToBinary } from './utils'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
-const filePath = path.join(__dirname, '/data/small.json')
 
-function writeOneMillionTimes(
-  count: number,
+function processJSON(
+  pointsToGenerate: number,
   writer: WriteStream,
   seed: number,
   callback = ({ expectedSum: number }) => {}
 ) {
   const clusters = 6
-  const clusterSize = count / clusters
+  const clusterSize = pointsToGenerate / clusters
   let i = 0
   let expectedSum = 0
-  let sumCoef = 1 / count
-  const bounds = generateLatLongBounds(seed, clusters)
+  let sumCoef = 1 / pointsToGenerate
 
   writer.write('{ "pairs": [') // Start the array
   write()
 
   function write() {
     let ok = true
-    while (i < count && ok) {
+    while (i < pointsToGenerate && ok) {
       i++
 
-      let data = {
-        x0: 0,
-        y0: 0,
-        x1: 0,
-        y1: 0,
-      }
-
       const clusterIndex = Math.min(Math.floor(i / clusterSize), clusters - 1)
-      const currentBounds = bounds[clusterIndex]
-      data = {
-        x0: faker.number.float({
-          min: currentBounds.latLowerBound,
-          max: currentBounds.latUpperBound,
-        }),
-        y0: faker.number.float({
-          min: currentBounds.longLowerBound,
-          max: currentBounds.longUpperBound,
-        }),
-        x1: faker.number.float({
-          min: currentBounds.latLowerBound,
-          max: currentBounds.latUpperBound,
-        }),
-        y1: faker.number.float({
-          min: currentBounds.longLowerBound,
-          max: currentBounds.longUpperBound,
-        }),
-      }
+      const data = getRandomPair(seed, clusterIndex, clusters)
 
       expectedSum +=
         sumCoef * ReferenceHaversine(data.x0, data.y0, data.x1, data.y1)
-      if (i === count) {
+
+      if (i === pointsToGenerate) {
         // Last time!
         writer.write(JSON.stringify(data) + '\n', 'utf8', () => {
           callback({ expectedSum })
@@ -72,7 +47,53 @@ function writeOneMillionTimes(
         ok = writer.write(JSON.stringify(data, null, 2) + ',\n', 'utf8')
       }
     }
-    if (i < count) {
+    if (i < pointsToGenerate) {
+      // Had to stop early!
+      // Write some more once it drains.
+      writer.once('drain', write)
+    }
+  }
+}
+
+function processBinary(
+  pointsToGenerate: number,
+  writer: WriteStream,
+  seed: number,
+  callback = ({ expectedSum: number }) => {}
+) {
+  const clusters = 6
+  const clusterSize = pointsToGenerate / clusters
+  let i = 0
+  let expectedSum = 0
+  let sumCoef = 1 / pointsToGenerate
+
+  write()
+
+  function write() {
+    let ok = true
+    while (i < pointsToGenerate && ok) {
+      i++
+
+      const clusterIndex = Math.min(Math.floor(i / clusterSize), clusters - 1)
+      const data = getRandomPair(seed, clusterIndex, clusters)
+
+      expectedSum +=
+        sumCoef * ReferenceHaversine(data.x0, data.y0, data.x1, data.y1)
+
+      const buffer = floatArrayToBinary([data.x0, data.y0, data.x1, data.y1])
+      if (i === pointsToGenerate) {
+        // Last time!
+        writer.write(buffer, () => {
+          callback({ expectedSum })
+        })
+        writer.end('] }') // End the array
+      } else {
+        // See if we should continue, or wait.
+        // Don't pass the callback, because we're not done yet.
+        ok = writer.write(buffer)
+      }
+    }
+    if (i < pointsToGenerate) {
       // Had to stop early!
       // Write some more once it drains.
       writer.once('drain', write)
@@ -81,21 +102,43 @@ function writeOneMillionTimes(
 }
 
 async function main() {
-  const countString = process.argv[2]
-  const seed = process.argv[4] ? parseInt(process.argv[4], 10) : 123
+  if (process.argv.length === 2) {
+    console.log('Usage: tsx haversine-generator.ts seed count format')
+    console.log('   tsx haversine-generator.ts 123 10000 json')
+    console.log('   tsx haversine-generator.ts 123 10000 bin')
+    return
+  }
+
+  const countString = process.argv[3]
+  const seed = process.argv[2] ? parseInt(process.argv[2], 10) : 123
   const count = parseInt(countString, 10) || 1000
+  const format = process.argv[4]
+
+  const filePath = path.join(__dirname, 'data', `pairs.${format}`)
   const fd = await fs.open(filePath, 'w')
   const writer = fd.createWriteStream()
 
-  writeOneMillionTimes(count, writer, seed, (data) => {
-    console.table({
-      seed,
-      count,
-      expectedSum: data.expectedSum,
+  if (format === 'json') {
+    processJSON(count, writer, seed, (data) => {
+      console.table({
+        seed,
+        count,
+        expectedSum: data.expectedSum,
+      })
+      writer.close()
+      fd.close()
     })
-    writer.close()
-    fd.close()
-  })
+  } else {
+    processBinary(count, writer, seed, (data) => {
+      console.table({
+        seed,
+        count,
+        expectedSum: data.expectedSum,
+      })
+      writer.close()
+      fd.close()
+    })
+  }
 }
 
 main()
@@ -118,4 +161,27 @@ function generateLatLongBounds(seed: number, clusterCount = 6) {
       longUpperBound,
     }
   })
+}
+
+function getRandomPair(seed: number, clusterIndex: number, clusters: number) {
+  const bounds = generateLatLongBounds(seed, clusters)
+  const currentBounds = bounds[clusterIndex]
+  return {
+    x0: faker.number.float({
+      min: currentBounds.latLowerBound,
+      max: currentBounds.latUpperBound,
+    }),
+    y0: faker.number.float({
+      min: currentBounds.longLowerBound,
+      max: currentBounds.longUpperBound,
+    }),
+    x1: faker.number.float({
+      min: currentBounds.latLowerBound,
+      max: currentBounds.latUpperBound,
+    }),
+    y1: faker.number.float({
+      min: currentBounds.longLowerBound,
+      max: currentBounds.longUpperBound,
+    }),
+  }
 }
