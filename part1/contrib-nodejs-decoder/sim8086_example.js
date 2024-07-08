@@ -24,25 +24,27 @@ const Flags = {
 
 let offset = 0
 while (offset < exampleDisassembly.length) {
-  let dis = addon.decode8086Instruction(exampleDisassembly.slice(offset))
+  const dis = addon.decode8086Instruction(exampleDisassembly.slice(offset))
   if (dis.Type === 0) {
     console.log('Unrecognized instruction')
   }
   if (dis.Type != 0) {
     offset += dis.Size
-    let op = addon.getMnemonicFromOperationType(dis.Op)
+    registersState.ip = offset
+    const op = addon.getMnemonicFromOperationType(dis.Op)
     printInstruction(op, dis.Operands)
-    simulate(op, dis.Operands, dis.Size)
+    simulate(op, dis.Operands, (ip) => {
+      offset += ip
+    })
     printRegistersState(registersState)
   }
 }
 
-function simulate(mnemonic, operands, size) {
-  registersState.ip += size
-  executeInstruction(mnemonic, operands)
+function simulate(mnemonic, operands, cb) {
+  executeInstruction(mnemonic, operands, cb)
 }
 
-function executeInstruction(mnemonic, operands) {
+function executeInstruction(mnemonic, operands, cb) {
   const destIndex = 0
   const srcIndex = 1
   const destType = operands[destIndex].Type
@@ -62,7 +64,10 @@ function executeInstruction(mnemonic, operands) {
       : undefined
   if (mnemonic == 'jne') {
     const value = operands[0].Immediate.Value
-    registersState['ip'] += value
+    if (Flags.ZF === 0) {
+      // then jump
+      cb(value)
+    }
   }
 
   if (mnemonic == 'mov') {
@@ -129,6 +134,6 @@ function printInstruction(mnemonic, operands) {
 }
 
 function printRegistersState(registersState) {
-  console.table(registersState)
-  console.table(Flags)
+  // console.table(registersState.ip)
+  // console.table(Flags)
 }
