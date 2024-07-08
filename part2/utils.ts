@@ -2,7 +2,7 @@
 export function floatArrayToBinary(floatArray: number[]) {
   const buffer = Buffer.alloc(floatArray.length * 8) // 8 bytes per float (64-bit)
   floatArray.forEach((float, index) => {
-    buffer.writeDoubleLE(float, index * 8)
+    buffer.writeFloatLE(float, index * 8)
   })
   return buffer
 }
@@ -10,8 +10,8 @@ export function floatArrayToBinary(floatArray: number[]) {
 // Function to convert binary buffer to float array
 export function binaryToFloatArray(buffer: Buffer) {
   const floatArray: number[] = []
-  for (let i = 0; i < buffer.length; i += 8) {
-    floatArray.push(buffer.readDoubleLE(i))
+  for (let i = 0; i + 8 <= buffer.length; i += 8) {
+    floatArray.push(buffer.readFloatLE(i))
   }
   return floatArray
 }
