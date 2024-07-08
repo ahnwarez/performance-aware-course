@@ -24,7 +24,7 @@
     */
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-        "args": ["100", "cluster", "123"],
+        "args": ["123","1", "cluster", "bin"],
       // Files to exclude from debugger (e.g. call stack)
       "skipFiles": [
         // Node.js internal core modules
