@@ -32,8 +32,15 @@ function getRegister(cpu, name) {
 }
 
 function setMemory(cpu, address, value) {
-  cpu.memory[address] = value & 0xff
-  cpu.memory[address + 1] = (value >> 8) & 0xff
+  const displacement = address.Displacement
+  const base1Name = addon.getRegisterNameFromOperand(address.Terms[0].Register)
+  const base2Name = addon.getRegisterNameFromOperand(address.Terms[1].Register)
+  const base1 = base1Name === '' ? 0 : getRegister(cpu, base1Name)
+  const base2 = base2Name === '' ? 0 : getRegister(cpu, base2Name)
+
+  const result = [base1, base2, displacement].reduce((acc, val) => acc + val)
+  cpu.memory[result] = value & 0xff
+  cpu.memory[result + 1] = (value >> 8) & 0xff
 }
 
 // little endian
@@ -101,7 +108,7 @@ function setOperandValue(cpu, operand, value) {
       )
       break
     case 2: // Memory
-      setMemory(cpu, operand.Address.Displacement, value)
+      setMemory(cpu, operand.Address, value)
       break
     default:
       throw new Error(`Unknown operand type: ${operand.Type}`)
