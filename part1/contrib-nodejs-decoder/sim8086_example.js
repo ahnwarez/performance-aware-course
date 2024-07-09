@@ -1,6 +1,13 @@
-const { log } = require('console')
-
 const addon = require('bindings')('sim8086')
+const fs = require('fs')
+const path = require('path')
+
+const inputPath = process.argv[2]
+const content = fs.readFileSync(path.join(__dirname, inputPath))
+const buffer = Buffer.from(content)
+
+// conver buffer to array of hex values (0x00)
+const bufferArray = Array.from(buffer.values())
 
 function createCPU() {
   return {
@@ -31,7 +38,7 @@ function getRegister(cpu, name) {
   return cpu.registers[name]
 }
 
-function setMemory(cpu, address, value) {
+function calculateAddress(cpu, address) {
   const displacement = address.Displacement
   const base1Name = addon.getRegisterNameFromOperand(address.Terms[0].Register)
   const base2Name = addon.getRegisterNameFromOperand(address.Terms[1].Register)
@@ -39,13 +46,18 @@ function setMemory(cpu, address, value) {
   const base2 = base2Name === '' ? 0 : getRegister(cpu, base2Name)
 
   const result = [base1, base2, displacement].reduce((acc, val) => acc + val)
+  return result
+}
+function setMemory(cpu, address, value) {
+  const result = calculateAddress(cpu, address)
   cpu.memory[result] = value & 0xff
   cpu.memory[result + 1] = (value >> 8) & 0xff
 }
 
 // little endian
 function getMemory(cpu, address) {
-  return cpu.memory[address] | (cpu.memory[address + 1] << 8)
+  const result = calculateAddress(cpu, address)
+  return cpu.memory[result] | (cpu.memory[result + 1] << 8)
 }
 
 function updateFlags(cpu, value) {
@@ -63,7 +75,7 @@ function getOperandValue(cpu, operand) {
       )
       break
     case 2: // Memory
-      return getMemory(cpu, operand.Address.Displacement)
+      return getMemory(cpu, operand.Address)
       break
     case 3:
       return operand.Immediate.Value
@@ -142,7 +154,12 @@ const instructions = {
     updateFlags(cpu, result)
   },
   jne: (cpu, operands) => {
-    if (cpu.zf === 0) {
+    if (cpu.flags.zf === 0) {
+      cpu.registers.ip += operands[0].Immediate.Value
+    }
+  },
+  jnz: (cpu, operands) => {
+    if (cpu.flags.zf === 0) {
       cpu.registers.ip += operands[0].Immediate.Value
     }
   },
@@ -157,18 +174,16 @@ function executeInstruction(cpu, mnemonic, operands) {
 }
 
 function decodeAndExecute(cpu, instructionBytes) {
-  let offset = 0
-  while (offset < instructionBytes.length) {
+  while (cpu.registers.ip < instructionBytes.length) {
     const decodedInstruction = addon.decode8086Instruction(
-      instructionBytes.slice(offset)
+      instructionBytes.slice(cpu.registers.ip)
     )
     if (decodedInstruction.Type === 0) {
       console.log('Unrecognized instruction')
       break
     }
 
-    offset += decodedInstruction.Size
-    cpu.registers.ip = offset
+    cpu.registers.ip += decodedInstruction.Size
 
     const mnemonic = addon.getMnemonicFromOperationType(decodedInstruction.Op)
 
@@ -187,21 +202,13 @@ function printInstruction(mnemonic, operands) {
 }
 
 function printCPUState(cpu) {
-  console.table(cpu.registers)
-  // console.log('Memory at 0x03e8:', getMemory(cpu, 0x03e8))
-  // console.log('Memory at 0x03ea:', getMemory(cpu, 0x03ea))
-  // console.log('Memory at 0x03ec:', getMemory(cpu, 0x03ec))
-  // console.log('Memory at 0x03ee:', getMemory(cpu, 0x03ee))
-  console.table(cpu.flags)
+  console.table({ ...cpu.registers, ...cpu.flags })
+  console.table(
+    Array.from(cpu.memory)
+      .filter(Boolean)
+      .map((v, i) => ({ [i]: v }))
+  )
 }
 
-// Example usage
-const exampleDisassembly = [
-  0xc7, 0x06, 0xe8, 0x03, 0x01, 0x00, 0xc7, 0x06, 0xea, 0x03, 0x02, 0x00, 0xc7,
-  0x06, 0xec, 0x03, 0x03, 0x00, 0xc7, 0x06, 0xee, 0x03, 0x04, 0x00, 0xbb, 0xe8,
-  0x03, 0xc7, 0x47, 0x04, 0x0a, 0x00, 0x8b, 0x1e, 0xe8, 0x03, 0x8b, 0x0e, 0xea,
-  0x03, 0x8b, 0x16, 0xec, 0x03, 0x8b, 0x2e, 0xee, 0x03,
-]
-
 const cpu = createCPU()
-decodeAndExecute(cpu, exampleDisassembly)
+decodeAndExecute(cpu, bufferArray)
