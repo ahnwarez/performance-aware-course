@@ -1,8 +1,12 @@
 var addon = require('bindings')('sim8086')
-//b903 00bb e803 83c3 0a83 e901 75f8
+//c706 e803 0100 c706 ea03 0200 c706 ec03
+//0300 c706 ee03 0400 bbe8 03c7 4704 0a00
+//8b1e e803 8b0e ea03 8b16 ec03 8b2e ee03
 let exampleDisassembly = [
-  0xb9, 0x03, 0x00, 0xbb, 0xe8, 0x03, 0x83, 0xc3, 0x0a, 0x83, 0xe9, 0x01, 0x75,
-  0xf8,
+  0xc7, 0x06, 0xe8, 0x03, 0x01, 0x00, 0xc7, 0x06, 0xea, 0x03, 0x02, 0x00, 0xc7,
+  0x06, 0xec, 0x03, 0x03, 0x00, 0xc7, 0x06, 0xee, 0x03, 0x04, 0x00, 0xbb, 0xe8,
+  0x03, 0xc7, 0x47, 0x04, 0x0a, 0x00, 0x8b, 0x1e, 0xe8, 0x03, 0x8b, 0x0e, 0xea,
+  0x03, 0x8b, 0x16, 0xec, 0x03, 0x8b, 0x2e, 0xee, 0x03,
 ]
 
 const registersState = {
@@ -21,6 +25,8 @@ const Flags = {
   ZF: 0,
   SF: 0,
 }
+
+const memory = new Uint8Array(0xffff)
 
 let offset = 0
 while (offset < exampleDisassembly.length) {
@@ -58,10 +64,6 @@ function executeInstruction(mnemonic, operands, cb) {
         ]
       : undefined
 
-  const dest =
-    destType !== 3
-      ? addon.getRegisterNameFromOperand(operands[destIndex].Register)
-      : undefined
   if (mnemonic == 'jne') {
     const value = operands[0].Immediate.Value
     if (Flags.ZF === 0) {
@@ -71,7 +73,16 @@ function executeInstruction(mnemonic, operands, cb) {
   }
 
   if (mnemonic == 'mov') {
-    if (operands[destIndex].Type == 1 && operands[srcIndex].Type == 3) {
+    if (operands[0].Type === 2) {
+      const dest = operands[0].Address.Displacement
+      // 16 bit value
+      const src = operands[1].Immediate.Value
+      // divide the value into low and high bytes
+      const low = src & 0xff
+      const high = (src & 0xff00) >> 8
+      memory[dest] = low
+      memory[dest + 1] = high
+    } else if (operands[destIndex].Type == 1 && operands[srcIndex].Type == 3) {
       const dest = addon.getRegisterNameFromOperand(
         operands[destIndex].Register
       )
@@ -134,6 +145,10 @@ function printInstruction(mnemonic, operands) {
 }
 
 function printRegistersState(registersState) {
-  // console.table(registersState.ip)
+  console.table(registersState)
+  console.log(memory[0x03e8])
+  console.log(memory[0x03ea])
+  console.log(memory[0x03ec])
+  console.log(memory[0x03ee])
   // console.table(Flags)
 }
