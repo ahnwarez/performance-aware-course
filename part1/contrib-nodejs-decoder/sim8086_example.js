@@ -71,12 +71,10 @@ function getOperandValue(cpu, operand) {
     case 1: // Register
       return getRegister(
         cpu,
-        addon.getRegisterNameFromOperand(operand.Register)
+        addon.getRegisterNameFromOperand(operand.Register),
       )
-      break
     case 2: // Memory
       return getMemory(cpu, operand.Address)
-      break
     case 3:
       return operand.Immediate.Value
     default:
@@ -84,7 +82,7 @@ function getOperandValue(cpu, operand) {
   }
 }
 
-function PrintOperand(cpu, operand) {
+function PrintOperand(operand) {
   switch (operand.Type) {
     case 0: // None
       return ''
@@ -94,10 +92,10 @@ function PrintOperand(cpu, operand) {
       // Memory
       const displacement = operand.Address.Displacement
       const base1 = addon.getRegisterNameFromOperand(
-        operand.Address.Terms[0].Register
+        operand.Address.Terms[0].Register,
       )
       const base2 = addon.getRegisterNameFromOperand(
-        operand.Address.Terms[1].Register
+        operand.Address.Terms[1].Register,
       )
       return `[${[base1, base2, displacement]
         .filter((r) => r !== '')
@@ -116,7 +114,7 @@ function setOperandValue(cpu, operand, value) {
       setRegister(
         cpu,
         addon.getRegisterNameFromOperand(operand.Register),
-        value
+        value,
       )
       break
     case 2: // Memory
@@ -176,7 +174,7 @@ function executeInstruction(cpu, mnemonic, operands) {
 function decodeAndExecute(cpu, instructionBytes) {
   while (cpu.registers.ip < instructionBytes.length) {
     const decodedInstruction = addon.decode8086Instruction(
-      instructionBytes.slice(cpu.registers.ip)
+      instructionBytes.slice(cpu.registers.ip),
     )
     if (decodedInstruction.Type === 0) {
       console.log('Unrecognized instruction')
@@ -197,7 +195,7 @@ function printInstruction(mnemonic, operands) {
   console.log(
     `${mnemonic} ${operands
       .map((operand) => PrintOperand(cpu, operand))
-      .join(', ')}`
+      .join(', ')}`,
   )
 }
 
@@ -206,7 +204,7 @@ function printCPUState(cpu) {
   console.table(
     Array.from(cpu.memory)
       .filter(Boolean)
-      .map((v, i) => ({ [i]: v }))
+      .map((v, i) => ({ [i]: v })),
   )
 }
 
