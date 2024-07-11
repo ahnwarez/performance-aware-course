@@ -11,6 +11,9 @@ importers:
       '@faker-js/faker':
         specifier: ^8.4.1
         version: 8.4.1
+      rdtsc:
+        specifier: ^3.0.4
+        version: 3.0.4
     devDependencies:
       '@types/node':
         specifier: ^20.14.7
@@ -440,6 +443,10 @@ packages:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
+  rdtsc@3.0.4:
+    resolution: {integrity: sha512-fy4Ko37OT0P7B0Lt1Kli+ZLYtZlwuwBdyOPmbWOGoVB+zkzZg6BnVlRFmhsS4Fg3d8UVKjLewfNc0SOJ5H58gQ==}
+    engines: {node: '>=12.4.0'}
+
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
@@ -493,6 +500,9 @@ packages:
   tinyspy@2.2.1:
     resolution: {integrity: sha512-KYad6Vy5VDWV4GH3fjpseMQ/XU2BhIYP7Vzd0LG44qRWm/Yt2WCOTicFdvmgo6gWaqooMQCawTtILVQJupKu7A==}
     engines: {node: '>=14.0.0'}
+
+  tslib@2.6.3:
+    resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
   tsx@4.16.2:
     resolution: {integrity: sha512-C1uWweJDgdtX2x600HjaFaucXTilT7tgUZHbOE4+ypskZ1OP8CRCSDkCxG6Vya9EwaFIVagWwpaVAn5wzypaqQ==}
@@ -923,6 +933,10 @@ snapshots:
       ansi-styles: 5.2.0
       react-is: 18.3.1
 
+  rdtsc@3.0.4:
+    dependencies:
+      tslib: 2.6.3
+
   react-is@18.3.1: {}
 
   resolve-pkg-maps@1.0.0: {}
@@ -976,6 +990,8 @@ snapshots:
   tinypool@0.8.4: {}
 
   tinyspy@2.2.1: {}
+
+  tslib@2.6.3: {}
 
   tsx@4.16.2:
     dependencies:
