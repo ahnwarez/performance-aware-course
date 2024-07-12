@@ -5,7 +5,7 @@ import url from 'url'
 import { faker } from '@faker-js/faker'
 
 import { ReferenceHaversine } from './haversine'
-import { floatArrayToBinary } from './utils'
+import { floatArrayToBinary } from '../utils'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -13,7 +13,7 @@ function processJSON(
   pointsToGenerate: number,
   writer: WriteStream,
   seed: number,
-  callback = ({ expectedSum: number }) => {}
+  callback = ({ expectedSum: number }) => {},
 ) {
   const clusters = 6
   const clusterSize = pointsToGenerate / clusters
@@ -59,7 +59,7 @@ function processBinary(
   pointsToGenerate: number,
   writer: WriteStream,
   seed: number,
-  callback = ({ expectedSum: number }) => {}
+  callback = ({ expectedSum: number }) => {},
 ) {
   const clusters = 6
   const clusterSize = pointsToGenerate / clusters
