@@ -114,7 +114,7 @@ async function main() {
   const count = parseInt(countString, 10) || 1000
   const format = process.argv[4]
 
-  const filePath = path.join(__dirname, 'data', `pairs.${format}`)
+  const filePath = path.join(__dirname, '../data', `pairs.${format}`)
   const fd = await fs.open(filePath, 'w')
   const writer = fd.createWriteStream()
 
