@@ -63,6 +63,15 @@ const ast = (tokens: Token[]): ASTNode => {
         token = advance() // Eat ':'
         const value = parseValue() // Recursively parse the value
         node.value[key] = value
+      } else if (token.type === TokenType.COMMA) {
+        token = advance() // Eat ','
+        const key = token.value
+        token = advance() // Eat key
+        if (token.type !== TokenType.COLON)
+          throw new Error('Expected : in key-value pair')
+        token = advance() // Eat ':'
+        const value = parseValue() // Recursively parse the value
+        node.value[key] = value
       } else {
         throw new Error(
           `Expected String key in object. Token type: ${token.type}`
@@ -127,8 +136,3 @@ const observer = new PerformanceObserver((list) => {
 })
 
 observer.observe({ entryTypes: ['function'], buffered: true })
-
-const timedParse = performance.timerify(parse)
-console.log(parse('{"key": "value" }'))
-
-timedParse('{"key": "value" }')

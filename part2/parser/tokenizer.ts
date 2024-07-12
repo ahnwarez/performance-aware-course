@@ -72,24 +72,45 @@ export function tokenize(input: string) {
       continue
     }
 
-    // For number (integer or float), boolean and null values
-    const regex = /[\d\w]/
-    // For number, boolean and null values
-    if (regex.test(character)) {
-      // if it's a number or a word character
-      let value = ''
-      while (regex.test(character)) {
-        value += character
-        character = input[++cursor]
+    // handle new lines
+    if (character === '\n') {
+      cursor++
+      continue
+    }
 
-        // check if there is a decimal point
-        if (character === '.') {
-          value += character
-          character = input[++cursor]
-        }
+    // For number (integer or float), boolean and null values
+    const numberRegex = /[-+]?(\d*\.)?\d+([eE][-+]?\d+)?/
+    if (
+      character === '-' ||
+      character === '+' ||
+      character === '.' ||
+      /\d/.test(character)
+    ) {
+      let value = ''
+      let numberStart = cursor
+
+      // Check if it's a negative sign followed by a number
+      if (
+        (character === '-' || character === '+') &&
+        /\d/.test(input[cursor + 1])
+      ) {
+        value += character
+        cursor++
+        character = input[cursor]
       }
 
-      if (isNumber(value)) tokens.push({ type: TokenType.NUMBER, value })
+      // Consume digits until a non-digit character is found
+      // for example: -45.653
+      while (
+        (cursor < inputLength && numberRegex.test(input[cursor])) ||
+        input[cursor] === '.'
+      ) {
+        value += character
+        cursor++
+        character = input[cursor]
+      }
+
+      if (isValidNumber(value)) tokens.push({ type: TokenType.NUMBER, value })
       else if (isBooleanTrue(value))
         tokens.push({ type: TokenType.TRUE, value })
       else if (isBooleanFalse(value))
@@ -111,9 +132,12 @@ export function tokenize(input: string) {
   return tokens
 }
 
-function isNumber(value: string) {
-  return !isNaN(Number(value))
+function isValidNumber(value: string): boolean {
+  // This regex matches integers, floats, and scientific notation
+  const numberRegex = /^[-+]?(\d*\.)?\d+([eE][-+]?\d+)?$/
+  return numberRegex.test(value)
 }
+
 function isBooleanTrue(value: string) {
   return value === 'true'
 }
