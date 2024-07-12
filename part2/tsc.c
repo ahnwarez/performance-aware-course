@@ -18,6 +18,9 @@ arm64_cntvct(void)
 {
     uint64_t val;
     __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(val));
+
+    // uint64_t value;
+    // asm("isb; mrs %0, CNTVCT_EL0" : "=r"(value));
     return val;
 }
 
@@ -95,7 +98,7 @@ u64 GetCPUFreq()
     return CPUFreq;
 }
 
-int main(void)
+int main1(void)
 {
     u64 CPUFreq = GetCPUFreq();
     printf("CPU Frequency: %llu\n", CPUFreq);
@@ -134,5 +137,32 @@ int main(void)
     printf("Function 4: %llu cycles, %f%%\n", cycles4, (double)cycles4 / totalCycles * 100);
     printf("Function 5: %llu cycles, %f%%\n", cycles5, (double)cycles5 / totalCycles * 100);
 
+    return 0;
+}
+
+
+int main(void)
+{
+	u64 OSFreq = GetOSTimerFreq();
+	printf("    OS Freq: %llu\n", OSFreq);
+
+	u64 CPUStart = rdtsc();
+	u64 OSStart = ReadOSTimer();
+	u64 OSEnd = 0;
+	u64 OSElapsed = 0;
+	while(OSElapsed < OSFreq)
+	{
+		OSEnd = ReadOSTimer();
+		OSElapsed = OSEnd - OSStart;
+	}
+	
+	u64 CPUEnd = rdtsc();
+	u64 CPUElapsed = CPUEnd - CPUStart;
+	
+	printf("   OS Timer: %llu -> %llu = %llu elapsed\n", OSStart, OSEnd, OSElapsed);
+	printf(" OS Seconds: %.4f\n", (f64)OSElapsed/(f64)OSFreq);
+	
+	printf("  CPU Timer: %llu -> %llu = %llu elapsed\n", CPUStart, CPUEnd, CPUElapsed);
+	
     return 0;
 }
