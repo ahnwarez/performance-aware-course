@@ -2,19 +2,17 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-static inline uint64_t
 #define u64 uint64_t
 #define f64 double
 
-arm64_cntfrq(void)
+u64 arm64_cntfrq(void)
 {
     uint64_t val;
     __asm__ __volatile__("mrs %0, cntfrq_el0" : "=r"(val));
     return val;
 }
 
-static inline uint64_t
-arm64_cntvct(void)
+u64 arm64_cntvct(void)
 {
     uint64_t val;
     __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(val));
@@ -24,11 +22,15 @@ arm64_cntvct(void)
     return val;
 }
 
-static inline uint64_t
 // this function is used to read the time stamp counter
-rdtsc(void)
+u64 getPerformanceCounter(void)
 {
     return arm64_cntvct();
+}
+
+u64 rdtsc(void)
+{
+    return getPerformanceCounter();
 }
 
 static uint64_t GetOSTimerFreq(void)

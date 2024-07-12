@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "gypfile": true,
   "scripts": {
     "dev": "tsx parser.ts",
     "test": "vitest"
@@ -11,12 +12,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "gypfile": true,
   "devDependencies": {
     "@types/node": "^20.14.7",
     "tsx": "^4.15.7",
-    "typescript": "^5.5.2",
-    "vitest": "^1.6.0"
+    "typescript": "^5.5.2"
   },
   "prettier": {
     "semi": false,
@@ -24,6 +23,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
-    "rdtsc": "^3.0.4"
+    "bindings": "^1.5.0",
+    "node-addon-api": "^8.1.0"
   }
 }
