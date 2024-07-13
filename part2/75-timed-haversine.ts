@@ -3,45 +3,32 @@ import path from 'node:path'
 
 import { parse } from './parser/json-parser'
 import { ReferenceHaversine } from './haversine/haversine'
-import { estimateCPUTimerFreq, readCPUTimer } from './perf/os-metrics'
+import { estimateCPUTimerFreq } from './perf/os-metrics'
+import { makeProfiler } from './profiler'
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname)
 
-function printTimeElapsed(
-  label: string,
-  start: bigint,
-  end: bigint,
-  totalElapsed: bigint,
-) {
-  const elapsed = end - start
-  const percent = (Number(elapsed) / Number(totalElapsed)) * 100
-  console.log(`   ${label}: ${elapsed}ns (${percent.toFixed(2)}%)`)
-}
-
 function main() {
   const freq = estimateCPUTimerFreq()
-  const appStart = readCPUTimer()
-  const readStart = readCPUTimer()
-  const jsonString = fs.readFileSync(
-    path.join(__dirname, 'data/pairs.json'),
-    'utf-8',
-  )
-  const readEnd = readCPUTimer()
+  const filePath = path.join(__dirname, 'data/pairs.json')
+  const stat = fs.statSync(filePath)
+  console.log(`File size: ${stat.size} bytes`)
+  const profiler = makeProfiler(freq)
 
-  const parseStart = readCPUTimer()
+  profiler.beginTime('Read', stat.size)
+  const jsonString = fs.readFileSync(filePath, 'utf-8')
+  profiler.endTime('Read')
+
+  profiler.beginTime('Parse')
   const data = parse(jsonString)
-  const parseEnd = readCPUTimer()
+  profiler.endTime('Parse')
 
   const pair = data.pairs[0]
 
-  const haversineStart = readCPUTimer()
+  profiler.beginTime('Haversine')
   const haversine = ReferenceHaversine(pair.x0, pair.y0, pair.x1, pair.y1)
-  const haversineEnd = readCPUTimer()
-  const appElapsed = haversineEnd - appStart
+  profiler.endTime('Haversine')
 
-  printTimeElapsed('Read', readStart, readEnd, appElapsed)
-  printTimeElapsed('Parse', parseStart, parseEnd, appElapsed)
-  printTimeElapsed('Haversine', haversineStart, haversineEnd, appElapsed)
-  printTimeElapsed('App', appStart, parseEnd, appElapsed)
+  profiler.printMetrics()
 }
 main()
