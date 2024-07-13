@@ -5,7 +5,7 @@ export function makeProfiler(freq: bigint) {
 
   const anchors = new Map<
     string,
-    { size: number; start: bigint; elapsed?: bigint }
+    { processedByteCount: number; start: bigint; elapsed?: bigint }
   >()
 
   return Object.freeze({
@@ -14,12 +14,12 @@ export function makeProfiler(freq: bigint) {
     printMetrics,
   })
 
-  function beginTime(label: string, sizeInBytes: number = 0): void {
+  function beginTime(label: string, byteCount: number = 0): void {
     if (anchors.has(label)) {
       throw new Error(`Label ${label} already exists`)
     }
     start = readCPUTimer()
-    anchors.set(label, { start, size: sizeInBytes })
+    anchors.set(label, { start, processedByteCount: byteCount })
   }
 
   function endTime(label: string): void {
@@ -32,31 +32,34 @@ export function makeProfiler(freq: bigint) {
 
   function printMetrics() {
     let totalTimeElapsed = BigInt(0)
-    let totalSize = 0
+    const megabyte = 1024 * 1024
 
     const table = Array.from(anchors.entries()).map(
-      ([label, { elapsed, size }]) => {
-        if (elapsed) {
-          totalTimeElapsed += elapsed
-          totalSize += size
-          const timeInSeconds = Number(elapsed) / Number(freq)
-          const throughput =
-            timeInSeconds > 0 ? toGigabytes(size) / timeInSeconds : 0
-          const percent = (Number(elapsed) / Number(totalTimeElapsed)) * 100
+      ([label, { elapsed, processedByteCount }]) => {
+        totalTimeElapsed += elapsed || BigInt(0)
+        processedByteCount += processedByteCount
+        const timeInSeconds = Number(elapsed) / Number(freq)
+        const throughput =
+          timeInSeconds > 0
+            ? toGigabytes(processedByteCount) / timeInSeconds
+            : 0
+        const percent = (Number(elapsed) / Number(totalTimeElapsed)) * 100
 
-          return {
-            label,
-            elapsed,
-            percent: Number(percent.toFixed(2)),
-            throughput: Number(throughput.toFixed(2)),
-          }
+        return {
+          label,
+          elapsed,
+          percent: Number(percent.toFixed(2)),
+          megabytes: processedByteCount / megabyte,
+          throughput: throughput,
         }
       },
     )
 
     const totalTimeInSeconds = Number(totalTimeElapsed) / Number(freq)
-    const overallThroughput =
-      totalTimeInSeconds > 0 ? toGigabytes(totalSize) / totalTimeInSeconds : 0
+    const overallThroughput = table.reduce(
+      (acc, r) => acc + (r && r.throughput) || 0,
+      0,
+    )
 
     console.log(
       'Total time elapsed:',
