@@ -1,38 +1,4 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import os from 'os'
-import { rdtsc } from 'rdtsc'
-
-const execAsync = promisify(exec)
-
-async function getCPUClockSpeed(): Promise<number> {
-  const platform = os.platform()
-
-  try {
-    if (platform === 'linux') {
-      const { stdout } = await execAsync("lscpu | grep 'CPU MHz'")
-      const match = stdout.match(/CPU MHz:\s+(\d+\.\d+)/)
-      if (match && match[1]) {
-        return parseFloat(match[1])
-      }
-    } else if (platform === 'darwin') {
-      const { stdout } = await execAsync('sysctl -n hw.cpufrequency_max')
-      return parseInt(stdout.trim(), 10) / 1000000 // Convert Hz to MHz
-    } else if (platform === 'win32') {
-      const { stdout } = await execAsync('wmic cpu get MaxClockSpeed')
-      const lines = stdout.trim().split('\n')
-      if (lines.length > 1) {
-        return parseInt(lines[1], 10)
-      }
-    }
-  } catch (error) {
-    console.error('Error getting CPU clock speed:', error)
-  }
-
-  // Fallback to a default value or estimation
-  console.warn('Could not determine CPU clock speed. Using default value.')
-  return 2300 // Default to 2.3 GHz
-}
+import { readCPUTimer } from './perf/os-metrics'
 
 interface PerformanceMetrics {
   timeElapsed: bigint
@@ -40,12 +6,7 @@ interface PerformanceMetrics {
   operationsPerSecond: number
 }
 
-const cpuFrequency = await getCPUClockSpeed()
-console.log({
-  cpuFrequency,
-})
-
-function makeObservable() {
+export function makeProfiler() {
   let start: bigint
   let _size: number
   let timeElapsed: bigint
@@ -58,12 +19,12 @@ function makeObservable() {
   })
 
   function beginTime(size: number = 0): void {
-    start = rdtsc()
+    start = readCPUTimer()
     _size = size
   }
 
   function endTime(): void {
-    timeElapsed = rdtsc() - start
+    timeElapsed = readCPUTimer() - start
   }
 
   function getMetrics(): PerformanceMetrics {
@@ -84,16 +45,3 @@ function makeObservable() {
     })
   }
 }
-
-// Example usage
-const obs = makeObservable()
-obs.beginTime(5000)
-
-// Simulate some work
-const result = 5 + 1
-for (let index = 0; index < 5000; index++) {
-  // Some operation
-}
-
-obs.endTime()
-obs.printMetrics()
