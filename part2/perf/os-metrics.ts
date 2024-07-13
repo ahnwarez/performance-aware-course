@@ -1,20 +1,20 @@
 import bindings from 'bindings'
 const performanceCouter = bindings('performance_counter')
 
-function GetOSTimerFreq() {
+export function GetOSTimerFreq() {
   return 1_000_000_000
 }
 
-function ReadOSTimer() {
+export function ReadOSTimer(): bigint {
   const htTime = process.hrtime.bigint()
   return htTime
 }
 
-function readCPUTimer() {
+export function readCPUTimer(): bigint {
   return performanceCouter.getCounter()
 }
 
-function estimateCPUTimerFreq(millisecondsToWait = 100) {
+export function estimateCPUTimerFreq(millisecondsToWait = 100) {
   const osFreq = GetOSTimerFreq()
   const osStart = ReadOSTimer()
   let osEnd = BigInt(0)
@@ -27,7 +27,7 @@ function estimateCPUTimerFreq(millisecondsToWait = 100) {
   }
 
   if (osElapsed === BigInt(0)) {
-    return 0
+    return BigInt(0)
   }
 
   const cpuEnd = readCPUTimer()
@@ -36,6 +36,3 @@ function estimateCPUTimerFreq(millisecondsToWait = 100) {
 
   return cpuFreq
 }
-
-const freq = estimateCPUTimerFreq()
-console.log(`Estimated frequency: ${freq} ticks per second`)
