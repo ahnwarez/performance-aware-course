@@ -18,6 +18,7 @@ function processJSON(
   const clusters = 6
   const clusterSize = pointsToGenerate / clusters
   let i = 0
+  // this sum will be used to compare the performance of the haversine function
   let expectedSum = 0
   let sumCoef = 1 / pointsToGenerate
 
@@ -37,10 +38,11 @@ function processJSON(
 
       if (i === pointsToGenerate) {
         // Last time!
-        writer.write(JSON.stringify(data) + '\n', 'utf8', () => {
+        writer.write(JSON.stringify(data) + '],\n', 'utf8', () => {
           callback({ expectedSum })
         })
-        writer.end('] }') // End the array
+        writer.write(`"expectedSum": ${expectedSum}`)
+        writer.end('}') // End the array
       } else {
         // See if we should continue, or wait.
         // Don't pass the callback, because we're not done yet.
