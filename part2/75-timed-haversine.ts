@@ -22,16 +22,20 @@ function main() {
 
   profiler.beginTime('Parse', stat.size)
   const jsonData = parse(inputString)
+  // const jsonData = JSON.parse(inputString)
+  const expectedSum = jsonData.expectedSum
   profiler.endTime('Parse')
 
-  const sum = sumHaversineDistances(jsonData.pairs)
-  console.log(`Actual sum: ${sum}`)
+  const actualSum = sumHaversineDistances(jsonData.pairs)
+  console.log(`Actual sum: ${actualSum}`)
+  console.log(`Expected sum: ${expectedSum}`)
+  console.log(`Sum difference: ${expectedSum - actualSum}`)
 
   profiler.printMetrics()
 }
 
 function sumHaversineDistances(
-  pairs: Array<{ x0: number; y0: number; x1: number; y1: number }>
+  pairs: Array<{ x0: number; y0: number; x1: number; y1: number }>,
 ) {
   // 8 because each number is 8 bytes
   const sizeOfNumberType = 8
