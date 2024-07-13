@@ -1,8 +1,6 @@
 import { readCPUTimer } from './perf/os-metrics'
 
 export function makeProfiler(freq: bigint) {
-  let start: bigint
-
   const anchors = new Map<
     string,
     { processedByteCount: number; start: bigint; elapsed?: bigint }
@@ -18,7 +16,7 @@ export function makeProfiler(freq: bigint) {
     if (anchors.has(label)) {
       throw new Error(`Label ${label} already exists`)
     }
-    start = readCPUTimer()
+    const start = readCPUTimer()
     anchors.set(label, { start, processedByteCount: byteCount })
   }
 
@@ -27,7 +25,7 @@ export function makeProfiler(freq: bigint) {
     if (!anchor) {
       throw new Error(`Label ${label} does not exist`)
     }
-    anchor.elapsed = readCPUTimer() - BigInt(anchor.start)
+    anchor.elapsed = readCPUTimer() - anchor.start
   }
 
   function printMetrics() {
@@ -52,19 +50,19 @@ export function makeProfiler(freq: bigint) {
           megabytes: processedByteCount / megabyte,
           throughput: throughput,
         }
-      },
+      }
     )
 
     const totalTimeInSeconds = Number(totalTimeElapsed) / Number(freq)
     const overallThroughput = table.reduce(
       (acc, r) => acc + (r && r.throughput) || 0,
-      0,
+      0
     )
 
     console.log(
       'Total time elapsed:',
       (totalTimeInSeconds * 1000).toFixed(2),
-      'ms',
+      'ms'
     )
     console.log('Overall Throughput:', overallThroughput.toFixed(2), 'gb/s')
     console.table(table)
