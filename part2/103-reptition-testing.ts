@@ -38,10 +38,12 @@ function main() {
     if (passedWaitTime(secondsToWait, testElapsed)) break
   }
 
+  const metrics = profiler.getMetrics()
+  console.table(metrics.table)
   console.table({
-    min: minElapsed,
-    avg: sumElapsed / testsCounter,
-    max: maxElapsed,
+    min: minElapsed / Number(freq),
+    avg: sumElapsed / testsCounter / Number(freq),
+    max: maxElapsed / Number(freq),
   })
 }
 
