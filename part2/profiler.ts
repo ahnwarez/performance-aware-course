@@ -13,19 +13,18 @@ export function makeProfiler(freq: bigint) {
   })
 
   function beginTime(label: string, byteCount: number = 0): void {
-    if (anchors.has(label)) {
-      throw new Error(`Label ${label} already exists`)
-    }
     const start = readCPUTimer()
     anchors.set(label, { start, processedByteCount: byteCount })
   }
 
-  function endTime(label: string): void {
+  function endTime(label: string) {
     const anchor = anchors.get(label)
     if (!anchor) {
       throw new Error(`Label ${label} does not exist`)
     }
     anchor.elapsed = readCPUTimer() - anchor.start
+
+    return anchor.elapsed || 0
   }
 
   function printMetrics() {
