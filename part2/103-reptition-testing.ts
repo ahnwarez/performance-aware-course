@@ -21,11 +21,17 @@ function main() {
   let maxElapsed = 0
   let sumElapsed = 0
   let testsCounter = 0
+  let arr = [] as number[]
   for (;;) {
     testsCounter++
 
-    profiler.beginTime('Parse', stat.size)
-    const jsonData = parse(inputString)
+    profiler.beginTime('Parse', 1000 * 8)
+    for (let index = 0; index < 1000; index++) {
+      arr[index + 0] = index + 0
+      // arr[index + 1] = index + 1
+      // arr[index + 2] = index + 2
+      // arr[index + 3] = index + 3
+    }
     const elapsed = profiler.endTime('Parse')
 
     minElapsed = Math.min(minElapsed, Number(elapsed))
@@ -37,6 +43,8 @@ function main() {
 
     if (passedWaitTime(secondsToWait, testElapsed)) break
   }
+
+  console.log(arr[0], arr[1], arr[2], arr[3])
 
   const metrics = profiler.getMetrics()
   console.table(metrics.table)
