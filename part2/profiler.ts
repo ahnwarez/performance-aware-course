@@ -11,7 +11,12 @@ export function makeProfiler(freq: bigint) {
     endTime,
     getMetrics,
     printMetrics,
+    reset,
   })
+
+  function reset() {
+    anchors.clear()
+  }
 
   function beginTime(label: string, byteCount: number = 0): void {
     const start = readCPUTimer()
@@ -53,14 +58,14 @@ export function makeProfiler(freq: bigint) {
     )
 
     const totalTimeInSeconds = Number(totalTimeElapsed) / Number(freq)
-    const overallThroughput = table.reduce(
+    const throughput = table.reduce(
       (acc, r) => acc + (r && r.throughput) || 0,
       0,
     )
 
     return {
       totalTimeInSeconds,
-      overallThroughput,
+      throughput,
       table,
     }
   }

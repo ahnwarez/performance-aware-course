@@ -2,7 +2,6 @@ import { makeProfiler } from './profiler'
 import { estimateCPUTimerFreq, readCPUTimer } from './perf/os-metrics'
 
 const cpuFreq = estimateCPUTimerFreq()
-const profiler = makeProfiler(cpuFreq)
 
 function testReduce(array: number[]) {
   return array.reduce((acc, i) => (acc as number) + (i as number), 0)
@@ -58,10 +57,19 @@ function sumTypedArray(array: Int32Array) {
   return sum
 }
 
+function sumForOf(array: number[]) {
+  let sum = 0
+  for (let i of array) {
+    sum += i
+  }
+  return sum
+}
+
 const functionsToTest = [
-  // { name: 'reduce', fn: testReduce },
-  // { name: 'for-loop', fn: testForLoop },
-  // { name: 'biSum', fn: biSum },
+  { name: 'reduce', fn: testReduce },
+  { name: 'for-loop', fn: testForLoop },
+  { name: 'for-of', fn: sumForOf },
+  { name: 'biSum', fn: biSum },
   { name: 'quadSum', fn: quadSum },
   { name: 'while-loop', fn: testWhileLoop },
   {
@@ -78,23 +86,31 @@ function runBenchmark(
   array: number[],
 ) {
   const startTime = readCPUTimer()
-  let min = BigInt(Number.MAX_SAFE_INTEGER)
+  let best = BigInt(Number.MAX_SAFE_INTEGER)
+  let worst = BigInt(0)
+  let avg = BigInt(0)
   let lastImprovement = startTime
   const tenSeconds = BigInt(10) * cpuFreq
-
+  const profiler = makeProfiler(cpuFreq)
+  let iterations = 0
   while (readCPUTimer() - lastImprovement < tenSeconds) {
     // Run for at least 10 seconds since last improvement
-    profiler.beginTime(fn.name, array.length)
+    profiler.beginTime(fn.name, array.length * 4)
     fn.fn(array)
     const elapsed = profiler.endTime(fn.name)
 
-    if (elapsed < min) {
-      min = elapsed
+    if (elapsed < best) {
+      best = elapsed
       lastImprovement = readCPUTimer()
-      const { overallThroughput } = profiler.getMetrics()
+      const { throughput } = profiler.getMetrics()
       process.stdout.write('\r\x1b[K')
-      process.stdout.write(`   ${min} cycles - ${overallThroughput} gb/s`)
+      process.stdout.write(
+        `   min: ${Number(best)} | max: ${Number(worst)} | throughput: ${throughput} gb/s`,
+      )
+    } else if (elapsed > worst) {
+      worst = elapsed
     }
+    iterations++
   }
 }
 
